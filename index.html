@@ -1,790 +1,466 @@
-<!doctype html>
-
-
-
-  
-
-
-<html class="theme-next pisces use-motion" lang="zh-Hans">
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8"/>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重庆市猎盟科技有限公司 - 科技驱动人才与商业的精准连接</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #e2e8f0;
+            --glass: rgba(255, 255, 255, 0.25);
+            --shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+            --border: 1px solid rgba(255, 255, 255, 0.18);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            overflow-x: hidden;
+        }
 
-<meta http-equiv="Cache-Control" content="no-transform" />
-<meta http-equiv="Cache-Control" content="no-siteapp" />
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
 
+        header {
+            padding: 6rem 0 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
 
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            clip-path: polygon(0 0, 100% 0, 100% 80%, 0 100%);
+            z-index: -1;
+        }
 
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
+        .tagline {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 800px;
+            margin: 0 auto;
+        }
 
+        section {
+            padding: 5rem 0;
+            position: relative;
+        }
 
+        section:nth-child(even) {
+            background-color: white;
+        }
 
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 3rem;
+            color: var(--dark);
+            position: relative;
+            display: inline-block;
+        }
 
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
 
+        h3 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 2rem 0 1.5rem;
+            color: var(--primary-dark);
+        }
 
+        p {
+            margin-bottom: 1.5rem;
+            color: var(--secondary);
+            font-size: 1.1rem;
+        }
 
+        ul {
+            margin-bottom: 2rem;
+            padding-left: 1.5rem;
+        }
 
-  
-  
-  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+        li {
+            margin-bottom: 0.8rem;
+            position: relative;
+        }
 
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
 
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            opacity: 0;
+            transform: translateY(30px);
+        }
 
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(31, 38, 135, 0.15);
+        }
 
-  
-  
-  
-  
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-  
-    
-    
-  
+        .icon {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
 
-  
+        .icon svg {
+            width: 30px;
+            height: 30px;
+            color: var(--primary);
+        }
 
-  
+        .highlight {
+            background: linear-gradient(120deg, rgba(37, 99, 235, 0.2) 0%, rgba(37, 99, 235, 0) 100%);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+        }
 
-  
+        .contact-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
 
-  
+        .contact-item {
+            flex: 1;
+            min-width: 250px;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
 
-  
-    
-    
-    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
-  
+        .contact-item svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary);
+        }
 
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.8rem 1.8rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            margin-top: 1rem;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
 
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
 
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
 
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
 
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
 
-<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+        .footer-meta {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
 
-<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .tagline {
+                font-size: 1.2rem;
+            }
+            
+            h2 {
+                font-size: 2rem;
+            }
+            
+            section {
+                padding: 3rem 0;
+            }
+        }
 
-
-  <meta name="keywords" content="Hexo, NexT" />
-
-
-
-
-
-
-
-
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
-
-
-
-
-
-
-<meta name="description" content="认识你自己">
-<meta property="og:type" content="website">
-<meta property="og:title" content="一个博客">
-<meta property="og:url" content="http://topcss.xyz/index.html">
-<meta property="og:site_name" content="一个博客">
-<meta property="og:description" content="认识你自己">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="一个博客">
-<meta name="twitter:description" content="认识你自己">
-
-
-
-<script type="text/javascript" id="hexo.configurations">
-  var NexT = window.NexT || {};
-  var CONFIG = {
-    root: '/',
-    scheme: 'Pisces',
-    sidebar: {"position":"left","display":"post"},
-    fancybox: true,
-    motion: true,
-    duoshuo: {
-      userId: '0',
-      author: '博主'
-    },
-    algolia: {
-      applicationID: '',
-      apiKey: '',
-      indexName: '',
-      hits: {"per_page":10},
-      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
-    }
-  };
-</script>
-
-
-
-  <link rel="canonical" href="http://topcss.xyz/"/>
-
-
-
-
-
-  <title> 一个博客 </title>
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
-
-<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
-
-  
-
-
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var hm = document.createElement("script");
-      hm.src = "//tajs.qq.com/stats?sId=60445146";
-      var s = document.getElementsByTagName("script")[0];
-      s.parentNode.insertBefore(hm, s);
-    })();
-  </script>
-
-
-
-
-
-
-  
-  
-    
-  
-
-  <div class="container one-collumn sidebar-position-left 
-   page-home 
- ">
-    <div class="headband"></div>
-
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-meta ">
-  
-
-  <div class="custom-logo-site-title">
-    <a href="/"  class="brand" rel="start">
-      <span class="logo-line-before"><i></i></span>
-      <span class="site-title">一个博客</span>
-      <span class="logo-line-after"><i></i></span>
-    </a>
-  </div>
-    
-      <p class="site-subtitle">尝试自己整一个博客</p>
-    
-</div>
-
-<div class="site-nav-toggle">
-  <button>
-    <span class="btn-bar"></span>
-    <span class="btn-bar"></span>
-    <span class="btn-bar"></span>
-  </button>
-</div>
-
-<nav class="site-nav">
-  
-
-  
-    <ul id="menu" class="menu">
-      
-        
-        <li class="menu-item menu-item-home">
-          <a href="/" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
-            
-            首页
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-categories">
-          <a href="/categories" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
-            
-            分类
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-about">
-          <a href="/about" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
-            
-            关于
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-archives">
-          <a href="/archives" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
-            
-            归档
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-tags">
-          <a href="/tags" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
-            
-            标签
-          </a>
-        </li>
-      
-
-      
-    </ul>
-  
-
-  
-</nav>
-
-
-
- </div>
+<body>
+    <header>
+        <div class="container">
+            <h1>重庆市猎盟科技有限公司</h1>
+            <p class="tagline">科技驱动人才与商业的精准连接</p>
+        </div>
     </header>
 
-    <main id="main" class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          <div id="content" class="content">
+    <section>
+        <div class="container">
+            <h2>公司简介</h2>
+            <p>成立于2020年，总部位于重庆高新区，我们是一家融合<span class="highlight">信息技术服务</span>与<span class="highlight">人力资源解决方案</span>的创新型企业。通过自主研发的技术工具与行业深耕经验，为企业客户提供高效、定制化的软件开发和人才匹配服务，助力客户实现数字化转型与团队升级。</p>
+        </div>
+    </section>
+
+    <section style="background-color: white;">
+        <div class="container">
+            <h2>核心业务</h2>
             
-  <section id="posts" class="posts-expand">
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://topcss.xyz/zh-Hans/小伙伴望山猴儿.html">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="节课">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="一个博客">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="一个博客" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
+            <div class="card-grid">
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <h3>信息技术服务</h3>
+                    <ul>
+                        <li><strong>定制软件开发</strong>：企业管理系统、行业垂直软件、数据可视化工具开发。</li>
+                        <li><strong>技术咨询与支持</strong>：信息化建设规划、系统集成、网络安全解决方案。</li>
+                        <li><strong>智能化服务</strong>：AI、大数据分析等前沿技术应用落地。</li>
+                    </ul>
+                </div>
                 
-                <a class="post-title-link" href="/zh-Hans/小伙伴望山猴儿.html" itemprop="url">
-                  小伙伴望山猴儿
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-19T08:57:53+08:00">
-                2017-09-19
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/zh-Hans/小伙伴望山猴儿.html#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="zh-Hans/小伙伴望山猴儿.html" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                    <h3>人力资源服务</h3>
+                    <ul>
+                        <li><strong>高端人才猎聘</strong>：专注IT、互联网、商务服务领域的中高端岗位精准匹配。</li>
+                        <li><strong>职业中介服务</strong>：覆盖全行业的招聘需求对接与人才库建设。</li>
+                        <li><strong>用工策略咨询</strong>：帮助企业优化招聘流程、提升人才留存率。</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-      </header>
-    
+    </section>
 
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>表哥一文《可爱的望山猴》令我十分怀念和远去的表弟，怀念那些童年的时光。</p>
-<h2 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h2><p>小时候最期待的事情就是去外婆家了，外婆离我们家的距离非常远，但那里有很多很多好玩的东西在吸引着我，在那里玩多久都觉得多玩不够。</p>
-<p>最早的印象大约是在两岁左右，那年夏天妈妈带着我回她的娘家。一路上我都嚷嚷着要妈妈背，但那时妈妈穿着一双高跟鞋，在乡间的石子路上走得也很吃力，她很有智慧的夸我走得很好，结果在她一路的鼓励之下我居然自己走到了外婆家。这个事情很长一段时间也成了我最自豪的一件事。</p>
-<p>到了外婆家就欢喜起来，首先进靠近洞子的灶屋，舀小半瓢水喝个畅快。然后就和表弟五儿一起，把他们家的抽屉翻一遍，看看那些神奇的收音机、电视机的电路板和各种零件。五儿有一只鹰，是一只靠能平衡漂浮的塑料的鹰，真是太神奇了，我们玩了好久好久。</p>
-<p>外婆家除了有望山猴五儿还有搜山狗、饿不瘦、太岁头，当我们这些小孩聚在一起，就成了一群叽叽喳喳麻雀，一会儿飞到这里，一会儿飞到那里。外公家的火盆旁会有几个坐桶，坐桶就像皇宫的王座一样，是那个时代的沙发。我们这群小麻雀飞过去的时候，就开始抢坐桶，好不热闹。</p>
-<p>后山有个垭口，这也是我们常去的地方。坐在垭口上吹着凉风，可以看到繁华热闹的小镇、嫩绿的小河、层层叠叠的群山，这种惬意不知道这群小麻雀们当时能体会多少。</p>
-<p>到了晚上，我们会围坐在火盆旁，听外公讲故事、唱古书。麻雀们的外号，都是来自他故事里的角色。外公有一口假牙，好奇的我总是要他拿出来给我们看，结果每次又都被奇怪的假牙吓得哇哇大哭。</p>
-<p>舅舅是五儿的爸爸，他也是个很神奇的人。除了会修理各种电器，倒立用手走路，他竟然还会法术。他跟我讲鲁班书的故事，我听得特别着迷。就和五儿跟着他学定根法、学画九龙水、学拉瘪碗，幻想着能够像孙大圣一样把别人定住，至今都还清清楚楚的记得那些奇奇怪怪的口诀。</p>
-<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>转眼间多年过去了，麻雀们都羽翼丰满，各自在不同的天空飞翔。但距离产生的不是美，而是无奈，是有心相聚无力相逢的无奈。即使这般无奈，在传统的春节还有走在一起的可能。而五儿却再也不回来了，他已随风远去，慢慢远去。。。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://topcss.xyz/zh-Hans/hello-world.html">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="节课">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.gif">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="一个博客">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="一个博客" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
+    <section>
+        <div class="container">
+            <h2>我们的优势</h2>
             
-            
-              
+            <div class="card-grid">
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3>技术+人才双引擎</h3>
+                    <p>用数字化工具提升招聘效率，用行业洞察精准筛选人才。</p>
+                </div>
                 
-                <a class="post-title-link" href="/zh-Hans/hello-world.html" itemprop="url">
-                  博客还可以这样架！
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-17T17:31:41+08:00">
-                2017-01-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/zh-Hans/hello-world.html#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="zh-Hans/hello-world.html" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          <p>这是第一篇文章，也许是最后一篇！</p>
-<h2 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h2><p>在网上无意间看到可以利用Github搭建一个静态博客，又听说阿里云的xyz域名只要一元钱。正好手头不忙，就试试呗！</p>
-<p>少年，网上那么多教程你不看，偏偏跑到这里来，服了你。如果你真想整一个，那就撸起袖子跟我干！Come on!<br>
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/zh-Hans/hello-world.html#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-  </section>
-
-  
-
-          
-          </div>
-          
-
-
-          
-
-        </div>
-        
-          
-  
-  <div class="sidebar-toggle">
-    <div class="sidebar-toggle-line-wrap">
-      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
-    </div>
-  </div>
-
-  <aside id="sidebar" class="sidebar">
-    <div class="sidebar-inner">
-
-      
-
-      
-
-      <section class="site-overview sidebar-panel sidebar-panel-active">
-        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-          <img class="site-author-image" itemprop="image"
-               src="/images/avatar.gif"
-               alt="节课" />
-          <p class="site-author-name" itemprop="name">节课</p>
-          <p class="site-description motion-element" itemprop="description">认识你自己</p>
-        </div>
-        <nav class="site-state motion-element">
-        
-          
-            <div class="site-state-item site-state-posts">
-              <a href="/archives">
-                <span class="site-state-item-count">2</span>
-                <span class="site-state-item-name">日志</span>
-              </a>
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <h3>本地化服务网络</h3>
+                    <p>深耕重庆及西南市场，理解区域产业特点与人才结构。</p>
+                </div>
+                
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </div>
+                    <h3>灵活合作模式</h3>
+                    <p>支持项目制、长期外包、驻场开发等多种服务形式。</p>
+                </div>
             </div>
-          
-
-          
-
-          
-            <div class="site-state-item site-state-tags">
-              <a href="/tags">
-                <span class="site-state-item-count">2</span>
-                <span class="site-state-item-name">标签</span>
-              </a>
-            </div>
-          
-
-        </nav>
-
-        
-
-        <div class="links-of-author motion-element">
-          
-            
-              <span class="links-of-author-item">
-                <a href="https://github.com/topcss" target="_blank" title="GitHub">
-                  
-                    <i class="fa fa-fw fa-github"></i>
-                  
-                  GitHub
-                </a>
-              </span>
-            
-          
         </div>
+    </section>
 
-        
-        
-
-        
-        
-
-        
-
-
-      </section>
-
-      
-
-    </div>
-  </aside>
-
-
-        
-      </div>
-    </main>
-
-    <footer id="footer" class="footer">
-      <div class="footer-inner">
-        <div class="copyright" >
-  
-  &copy;  2013 - 
-  <span itemprop="copyrightYear">2017</span>
-  <span class="with-love">
-    <i class="fa fa-heart"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">节课</span>
-</div>
+    <section style="background-color: white;">
+        <div class="container">
+            <h2>客户案例</h2>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                    <h3>某物流企业</h3>
+                    <p>定制开发仓储管理系统(WMS)，实现库存效率提升30%。</p>
+                </div>
+                
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <h3>重庆本地IT公司</h3>
+                    <p>3个月内完成20名核心技术团队搭建。</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
 
-<div class="powered-by">
-  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
-</div>
 
-<div class="theme-info">
-  主题 -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
+    <section style="background-color: white;">
+        <div class="container">
+            <h2>加入我们</h2>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <h3>招聘岗位</h3>
+                    <ul>
+                        <li>Java开发工程师</li>
+                        <li>人力资源顾问</li>
+                    </ul>
+                    <a href="#" class="btn">查看详情</a>
+                </div>
+                
+                <div class="card">
+                    <div class="icon">
+                        <svg xmlns="http://www3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <h3>合作伙伴计划</h3>
+                    <p>欢迎技术团队、猎头机构洽谈资源合作。</p>
+                    <a href="#" class="btn">联系我们</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
-
-        
-
-        
-      </div>
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">猎盟科技</div>
+                <p>科技驱动人才与商业的精准连接</p>
+                <div class="footer-meta">
+                    <p>© 2023 重庆市猎盟科技有限公司</p>
+                </div>
+            </div>
+        </div>
     </footer>
 
-    <div class="back-to-top">
-      <i class="fa fa-arrow-up"></i>
-    </div>
-  </div>
-
-  
-
-<script type="text/javascript">
-  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
-    window.Promise = null;
-  }
-</script>
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-  
-  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
-
-  
-  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
-
-  
-  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
-
-  
-  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
-
-  
-  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-
-  
-  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
-
-
-  
-
-
-  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
-
-  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
-
-
-
-  
-  
-
-
-  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
-
-  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
-
-
-
-  
-
-  
-
-
-  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
-
-
-
-  
-
-  
-    
-  
-
-  <script type="text/javascript">
-    var duoshuoQuery = {short_name:"topcss"};
-    (function() {
-      var ds = document.createElement('script');
-      ds.type = 'text/javascript';ds.async = true;
-      ds.id = 'duoshuo-script';
-      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
-      ds.charset = 'UTF-8';
-      (document.getElementsByTagName('head')[0]
-      || document.getElementsByTagName('body')[0]).appendChild(ds);
-    })();
-  </script>
-
-  
-    
-    
-    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
-    <script src="/js/src/hook-duoshuo.js"></script>
-  
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-
-  
-
-  
-
-  
-
-  
-
-
+    <script>
+        // 卡片动画
+        const cards = document.querySelectorAll('.card');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('visible');
+                    }, index * 100);
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        cards.forEach(card => {
+            observer.observe(card);
+        });
+    </script>
 </body>
 </html>
