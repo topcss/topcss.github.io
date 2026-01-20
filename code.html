@@ -90,11 +90,11 @@
 
         <div class="mt-4 grid grid-cols-2 gap-4">
             <div>
-                <label class="text-[9px] text-slate-400 font-bold block mb-1 uppercase">帧率 (FPS: <span id="v-fps">10</span>)</label>
+                <label class="text-[12px] text-slate-400 font-bold block mb-1 uppercase">帧率 (FPS: <span id="v-fps">10</span>)</label>
                 <input type="range" min="1" max="30" value="10" oninput="sender.fps=this.value;document.getElementById('v-fps').innerText=this.value" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
             </div>
             <div>
-                <label class="text-[9px] text-slate-400 font-bold block mb-1 uppercase">容量 (Size: <span id="v-cs">180</span>)</label>
+                <label class="text-[12px] text-slate-400 font-bold block mb-1 uppercase">容量 (Size: <span id="v-cs">180</span>)</label>
                 <input type="range" min="50" max="500" value="180" oninput="sender.cS=parseInt(this.value);document.getElementById('v-cs').innerText=this.value" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
             </div>
         </div>
@@ -123,7 +123,7 @@
 
 <main id="panel-receive" class="hidden flex-1 p-6 flex flex-col max-w-md mx-auto w-full">
     <div class="flex gap-3 mb-6"> 
-        <button onclick="receiver.setSrc('environment')" class="flex-1 bg-white border border-slate-100 py-4 rounded-2xl text-[11px] font-bold shadow-sm active:bg-slate-50">后置镜头</button>
+        <button onclick="receiver.setSrc('environment')" class="flex-1 bg-white border border-slate-100 py-4 rounded-2xl text-[11px] font-bold shadow-sm active:bg-slate-50">镜头扫描</button>
         <button onclick="receiver.setSrc('screen')" class="flex-1 bg-white border border-slate-100 py-4 rounded-2xl text-[11px] font-bold shadow-sm active:bg-slate-50">捕捉屏幕</button>
     </div>
     
