@@ -3,496 +3,603 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AirScan Matrix (喷泉码极速版)</title>
+    <title>AirScan Pro | 光学矩阵传输</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .grid-canvas-container { display: grid; gap: 4px; background: #eee; padding: 4px; border-radius: 12px; margin: 0 auto; width: fit-content;}
-        canvas.qr-cell { width: 100%; height: auto; display: block; image-rendering: pixelated; }
-        .scan-overlay { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; border: 2px solid rgba(255,255,255,0.3); box-sizing: border-box;}
-        .scan-grid-cell { border: 1px dashed rgba(255,255,255,0.2); position: relative; }
-        .scan-grid-cell.active { border: 2px solid #10b981; background: rgba(16, 185, 129, 0.2); }
-        /* 隐藏原生Video，我们画在Canvas上处理 */
-        #video-hidden { display: none; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* 隐藏滚动条 */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        
+        .matrix-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: 1fr 1fr; 
+            gap: 8px; 
+            width: 100%; 
+            aspect-ratio: 1/1;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 20px;
+        }
+        canvas.qr-cell { width: 100% !important; height: 100% !important; border-radius: 8px; image-rendering: pixelated; }
+        
+        /* 扫描遮罩 */
+        .scan-mask { position: absolute; inset: 0; pointer-events: none; border-radius: 16px; overflow: hidden;}
+        .scan-quadrant { border: 1px dashed rgba(255,255,255,0.3); box-sizing: border-box; transition: all 0.2s; }
+        .scan-quadrant.active { background: rgba(16, 185, 129, 0.3); border: 2px solid #10b981; }
+
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #3b82f6; margin-top: -8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #e2e8f0; border-radius: 2px; }
+
+        dialog::backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-20">
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-safe">
 
-<div class="max-w-xl mx-auto px-4 pt-6">
-    <div class="flex justify-between items-center mb-6">
+<div class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-2xl overflow-hidden relative">
+    
+    <header class="px-6 pt-8 pb-4 flex justify-between items-center bg-white sticky top-0 z-10 border-b border-slate-100">
         <div>
-            <h1 class="text-2xl font-black bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">AirScan Matrix</h1>
-            <p class="text-xs text-slate-400">喷泉码 + 矩阵并行传输</p>
+            <h1 class="text-xl font-black tracking-tight text-slate-900">AirScan <span class="text-blue-600">Pro</span></h1>
+            <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">Matrix Fountain Protocol</p>
         </div>
-        <div class="bg-slate-800 p-1 rounded-xl flex text-xs font-bold">
-            <button id="tab-s" onclick="app.switchTab('send')" class="px-4 py-2 rounded-lg bg-slate-700 text-blue-300 shadow transition-all">发送</button>
-            <button id="tab-r" onclick="app.switchTab('receive')" class="px-4 py-2 rounded-lg text-slate-500 hover:text-slate-300 transition-all">接收</button>
+        <button onclick="document.getElementById('helpModal').showModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-lg hover:bg-slate-200 transition">?</button>
+    </header>
+
+    <div class="px-6 py-2">
+        <div class="flex bg-slate-100 p-1 rounded-2xl relative font-bold text-sm">
+            <button onclick="app.switchTab('send')" id="tab-s" class="flex-1 py-2.5 rounded-xl shadow-sm bg-white text-blue-600 transition-all z-10">发送文件</button>
+            <button onclick="app.switchTab('receive')" id="tab-r" class="flex-1 py-2.5 rounded-xl text-slate-400 transition-all z-10">接收文件</button>
         </div>
     </div>
 
-    <div id="panel-send" class="space-y-5">
-        <div class="bg-slate-800 p-5 rounded-3xl border border-slate-700">
-            <textarea id="inputText" class="w-full bg-slate-900/50 text-slate-200 p-3 rounded-xl border border-slate-700 text-sm h-24 focus:border-blue-500 outline-none" placeholder="输入文本或拖入文件..."></textarea>
-            
-            <div id="fileInfo" class="hidden mt-3 bg-blue-900/30 border border-blue-500/30 p-2 rounded-lg flex justify-between items-center">
-                <span id="fileName" class="text-xs text-blue-300 truncate max-w-[200px]"></span>
-                <button onclick="app.clearFile()" class="text-xs text-red-400 font-bold px-2">✕</button>
-            </div>
-
-            <div class="flex gap-3 mt-4">
-                <button onclick="document.getElementById('fileInput').click()" class="flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-sm transition">📎 选择文件</button>
-                <input type="file" id="fileInput" class="hidden">
-                <button onclick="sender.init()" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-900/50 transition">🚀 生成矩阵</button>
-            </div>
-        </div>
-
-        <div id="matrixControl" class="hidden bg-slate-800 p-5 rounded-3xl border border-slate-700 animate-fade-in">
-            <div class="flex justify-between items-center mb-4">
-                <span class="text-sm font-bold text-slate-400">矩阵密度: <span id="gridVal" class="text-blue-400">2x2</span></span>
-                <input type="range" min="1" max="3" value="2" class="w-32 accent-blue-500" oninput="sender.updateGridSize(this.value)">
+    <main id="panel-send" class="flex-1 px-6 py-4 flex flex-col space-y-4 overflow-y-auto">
+        
+        <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-6 text-center transition hover:border-blue-400 group relative">
+            <div id="empty-state">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl group-hover:scale-110 transition">📂</div>
+                <h3 class="text-sm font-bold text-slate-700">点击选择或拖入文件</h3>
+                <p class="text-xs text-slate-400 mt-1">支持图片、文档、压缩包</p>
             </div>
             
-            <div class="flex justify-center bg-white p-4 rounded-2xl shadow-inner">
-                <div id="qrGrid" class="grid-canvas-container" style="grid-template-columns: repeat(2, 1fr);">
+            <div id="file-state" class="hidden">
+                <div class="flex items-center gap-3 text-left">
+                    <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xs shadow-lg shadow-blue-200">FILE</div>
+                    <div class="flex-1 min-w-0">
+                        <p id="send-filename" class="text-sm font-bold text-slate-800 truncate">example.zip</p>
+                        <p id="send-filesize" class="text-xs text-slate-500 font-mono">2.4 MB</p>
                     </div>
-            </div>
-
-            <div class="mt-6 text-center">
-                <p class="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Fountain Code Status</p>
-                <div class="text-2xl font-mono font-black text-emerald-400 tracking-tighter">
-                    <span id="sentPackets">0</span> <span class="text-sm text-slate-600">Droplets</span>
+                    <button onclick="app.resetFile(event)" class="p-2 text-slate-300 hover:text-red-500 transition">✕</button>
                 </div>
-                <div class="text-xs text-slate-500 mt-2">正在无限生成随机异或包...</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="panel-receive" class="hidden space-y-5">
-        <div class="bg-slate-800 p-4 rounded-3xl border border-slate-700 relative overflow-hidden">
-            <div class="relative w-full aspect-[3/4] bg-black rounded-2xl overflow-hidden shadow-2xl">
-                <video id="video-hidden" autoplay playsinline></video>
-                <canvas id="scan-canvas" class="w-full h-full object-cover"></canvas>
-                <div id="grid-overlay" class="absolute inset-0 grid grid-cols-2 grid-rows-2"></div>
-            </div>
-
-            <div class="mt-4 flex gap-3">
-                <button id="btn-cam" onclick="receiver.toggleCamera()" class="flex-1 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-900/50">开启摄像头</button>
-                <select id="cam-select" class="bg-slate-900 text-white text-xs px-2 rounded-xl border border-slate-600 outline-none max-w-[100px]">
-                    <option value="environment">后置</option>
-                    <option value="user">前置</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="recv-status" class="bg-slate-800 p-5 rounded-3xl border border-slate-700 hidden">
-            <div class="flex justify-between text-xs font-bold text-slate-400 mb-2">
-                <span>解码进度 (Peeling Decoder)</span>
-                <span id="progress-txt" class="text-blue-400">0%</span>
-            </div>
-            <div class="h-4 bg-slate-900 rounded-full overflow-hidden mb-4 border border-slate-700">
-                <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 w-0 transition-all duration-300"></div>
             </div>
             
-            <div class="grid grid-cols-2 gap-2 text-center">
-                <div class="bg-slate-900/50 p-2 rounded-lg">
-                    <div class="text-[10px] text-slate-500">已收集包</div>
-                    <div id="stat-collected" class="font-mono text-lg text-slate-200">0</div>
+            <input type="file" id="fileInput" class="absolute inset-0 opacity-0 cursor-pointer" onchange="sender.handleFile(this.files[0])">
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+            <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('adv-settings').classList.toggle('hidden')">
+                <span class="text-xs font-bold text-slate-500 uppercase">传输参数配置</span>
+                <span class="text-xs text-blue-500">修改 ▼</span>
+            </div>
+            <div id="adv-settings" class="hidden mt-4 space-y-4 border-t border-slate-100 pt-4">
+                <div>
+                    <div class="flex justify-between text-xs mb-2">
+                        <span class="text-slate-500">刷新率 (FPS)</span>
+                        <span id="disp-fps" class="font-mono font-bold text-slate-700">15</span>
+                    </div>
+                    <input type="range" min="5" max="30" value="15" oninput="sender.fps=this.value; document.getElementById('disp-fps').innerText=this.value; sender.restart()">
                 </div>
-                <div class="bg-slate-900/50 p-2 rounded-lg">
-                    <div class="text-[10px] text-slate-500">原始块总数</div>
-                    <div id="stat-total" class="font-mono text-lg text-slate-200">-</div>
+                <div>
+                    <div class="flex justify-between text-xs mb-2">
+                        <span class="text-slate-500">单帧容量 (Bytes)</span>
+                        <span id="disp-size" class="font-mono font-bold text-slate-700">250</span>
+                    </div>
+                    <input type="range" min="100" max="600" step="10" value="250" oninput="sender.chunkSize=this.value; document.getElementById('disp-size').innerText=this.value; sender.prepareData()">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col justify-center min-h-[300px] relative">
+            <div id="matrix-container" class="matrix-grid opacity-50 blur-sm transition duration-500">
+                <canvas id="qr1" class="qr-cell"></canvas>
+                <canvas id="qr2" class="qr-cell"></canvas>
+                <canvas id="qr3" class="qr-cell"></canvas>
+                <canvas id="qr4" class="qr-cell"></canvas>
+            </div>
+            
+            <div id="send-overlay" class="absolute inset-0 flex items-center justify-center">
+                <button id="btn-start-send" onclick="sender.toggle()" disabled class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 transition">
+                    开始广播
+                </button>
+            </div>
+        </div>
+        
+        <p class="text-center text-[10px] text-slate-400 font-mono">PACKETS SENT: <span id="pkg-count" class="text-slate-800">0</span></p>
+    </main>
+
+    <main id="panel-receive" class="hidden flex-1 px-6 py-4 flex flex-col space-y-4">
+        <div class="bg-slate-900 rounded-[2rem] p-1 shadow-2xl relative aspect-[3/4] overflow-hidden">
+            <video id="cam-video" class="hidden" autoplay playsinline></video>
+            <canvas id="cam-canvas" class="w-full h-full object-cover rounded-[1.8rem] bg-slate-800"></canvas>
+            
+            <div class="scan-mask grid grid-cols-2 grid-rows-2">
+                <div id="q-tl" class="scan-quadrant border-r border-b"></div>
+                <div id="q-tr" class="scan-quadrant border-b"></div>
+                <div id="q-bl" class="scan-quadrant border-r"></div>
+                <div id="q-br" class="scan-quadrant"></div>
+            </div>
+
+            <div id="cam-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm z-20">
+                <button onclick="receiver.start()" class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-blue-500/50 animate-pulse">📷</button>
+                <p class="text-white text-xs font-bold mt-4">点击开启摄像头</p>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-lg relative overflow-hidden">
+            <div id="recv-idle" class="text-center py-2">
+                <p class="text-sm font-bold text-slate-400">等待信号...</p>
+            </div>
+            
+            <div id="recv-active" class="hidden space-y-3">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Incoming File</p>
+                        <p id="recv-name" class="text-sm font-bold text-slate-800 break-all leading-tight">--</p>
+                    </div>
+                    <span id="recv-size" class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-mono font-bold">0 KB</span>
+                </div>
+                
+                <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 w-0 transition-all duration-300"></div>
+                </div>
+                
+                <div class="flex justify-between text-[10px] font-mono font-bold text-slate-400">
+                    <span>PKGS: <span id="collected-count" class="text-blue-600">0</span></span>
+                    <span id="progress-text">0%</span>
                 </div>
             </div>
 
-            <div id="download-area" class="hidden mt-4 pt-4 border-t border-slate-700 text-center">
-                <p class="text-emerald-400 font-bold mb-2">🎉 文件还原成功!</p>
-                <button id="dl-btn" class="w-full py-3 bg-white text-slate-900 rounded-xl font-bold shadow-lg">下载文件</button>
+            <div id="recv-success" class="hidden absolute inset-0 bg-emerald-500 flex flex-col items-center justify-center text-white z-30">
+                <div class="text-3xl mb-2">🎉</div>
+                <p class="font-bold text-sm">接收完成</p>
+                <button id="dl-btn" class="mt-4 bg-white text-emerald-600 px-6 py-2 rounded-xl font-bold text-xs shadow-lg">下载文件</button>
             </div>
         </div>
-    </div>
+    </main>
+
+    <dialog id="helpModal" class="p-0 rounded-3xl max-w-xs shadow-2xl backdrop:bg-slate-900/50">
+        <div class="p-6 bg-white">
+            <h3 class="text-lg font-black text-slate-800 mb-4">如何使用 AirScan Pro</h3>
+            <ul class="space-y-4 text-sm text-slate-600">
+                <li class="flex gap-3">
+                    <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex-none flex items-center justify-center font-bold text-xs">1</span>
+                    <p>在发送端选择文件。系统会将文件切割并通过 4 个二维码并行广播。</p>
+                </li>
+                <li class="flex gap-3">
+                    <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex-none flex items-center justify-center font-bold text-xs">2</span>
+                    <p>在接收端打开摄像头，对准发送端的 2x2 矩阵。</p>
+                </li>
+                <li class="flex gap-3">
+                    <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex-none flex items-center justify-center font-bold text-xs">3</span>
+                    <p>利用<b>喷泉码</b>技术，无需对齐每一帧。只要收集到足够的数据包，文件即可还原。</p>
+                </li>
+            </ul>
+            <form method="dialog" class="mt-6">
+                <button class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm">我知道了</button>
+            </form>
+        </div>
+    </dialog>
+
 </div>
 
 <script>
-// ==========================================
-// 1. 数学核心：LT 喷泉码 (简化版)
-// ==========================================
-class LTCodec {
-    // 简单的伪随机数生成器 (保证发送/接收端一致)
-    static PRNG(seed) {
-        return function() {
-            var t = seed += 0x6D2B79F5;
-            t = Math.imul(t ^ t >>> 15, t | 1);
-            t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-            return ((t ^ t >>> 14) >>> 0) / 4294967296;
-        }
-    }
-
-    // 生成一个用于异或的“度”和“块索引列表”
-    static getDropletSpecs(seed, totalBlocks) {
-        const rand = this.PRNG(seed);
-        // 简化的鲁棒孤立子分布 (Robust Soliton) 模拟
-        // 大部分是度1 (直接传输)，少部分是高维度 (用于修复)
-        const r = rand();
-        let degree = 1;
-        if (r < 0.5) degree = 1;
-        else if (r < 0.8) degree = 2;
-        else if (r < 0.95) degree = Math.min(totalBlocks, 3 + Math.floor(rand() * 4));
-        else degree = Math.min(totalBlocks, Math.ceil(rand() * totalBlocks)); // 全局修复包
-
-        // 随机选择 degree 个不重复的块索引
-        const indices = new Set();
-        while(indices.size < degree) {
-            indices.add(Math.floor(rand() * totalBlocks));
-        }
-        return Array.from(indices);
-    }
-
-    static xorChunks(chunks) {
-        const len = chunks[0].length;
-        const res = new Uint8Array(len);
-        for(let i=0; i<len; i++) {
-            let val = 0;
-            for(let c of chunks) val ^= c[i];
-            res[i] = val;
-        }
-        return res;
-    }
-}
-
-// ==========================================
-// 2. 全局状态管理
-// ==========================================
-const app = {
-    fileData: null,
-    fileName: '',
-    chunkSize: 150, // 减小单个二维码数据量以提高识别率
-    switchTab: (t) => {
-        ['send', 'receive'].forEach(m => {
-            const isActive = m === t;
-            document.getElementById(`panel-${m}`).classList.toggle('hidden', !isActive);
-            const btn = document.getElementById(`tab-${m[0]}`);
-            btn.className = isActive 
-                ? 'px-4 py-2 rounded-lg bg-slate-700 text-blue-300 shadow transition-all'
-                : 'px-4 py-2 rounded-lg text-slate-500 hover:text-slate-300 transition-all';
-        });
-        if(t === 'receive') receiver.initCanvas();
+// ================= UTILS =================
+const Utils = {
+    formatSize: (bytes) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     },
-    clearFile: () => {
-        app.fileData = null;
-        app.fileName = '';
-        document.getElementById('inputText').value = '';
-        document.getElementById('fileInfo').classList.add('hidden');
+    // 简易PRNG，保证收发端一致
+    PRNG: (seed) => () => {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+};
+
+// ================= APP STATE =================
+const app = {
+    activeTab: 'send',
+    switchTab: (tab) => {
+        app.activeTab = tab;
+        ['send', 'receive'].forEach(t => {
+            const active = t === tab;
+            document.getElementById(`panel-${t}`).classList.toggle('hidden', !active);
+            const btn = document.getElementById(`tab-${t[0]}`);
+            if(active) {
+                btn.className = 'flex-1 py-2.5 rounded-xl shadow-sm bg-white text-blue-600 transition-all z-10';
+            } else {
+                btn.className = 'flex-1 py-2.5 rounded-xl text-slate-400 transition-all z-10';
+            }
+        });
+        if (tab === 'receive') {
+            sender.stop();
+        } else {
+            receiver.stop();
+        }
+    },
+    resetFile: (e) => {
+        if(e) e.stopPropagation();
         document.getElementById('fileInput').value = '';
-        document.getElementById('matrixControl').classList.add('hidden');
+        document.getElementById('empty-state').classList.remove('hidden');
+        document.getElementById('file-state').classList.add('hidden');
+        document.getElementById('btn-start-send').disabled = true;
+        document.getElementById('matrix-container').classList.add('opacity-50', 'blur-sm');
+        document.getElementById('send-overlay').classList.remove('hidden');
+        document.getElementById('btn-start-send').innerText = "开始广播";
         sender.stop();
     }
 };
 
-// ==========================================
-// 3. 发送端逻辑 (喷泉发生器)
-// ==========================================
+// ================= SENDER ENGINE =================
 const sender = {
+    fileBytes: null,
+    fileName: "",
+    fileSize: 0,
+    chunks: [],
+    
+    // Settings
+    fps: 15,
+    chunkSize: 250,
+    
+    // Runtime
     timer: null,
-    gridSize: 2,
-    blocks: [],
+    tid: null,
     packetCount: 0,
-    tid: null, // 传输ID，用于区分不同文件
+    qrs: [],
+    isSending: false,
 
     init: () => {
-        const text = document.getElementById('inputText').value;
-        if (!app.fileData && !text) return alert("请先输入内容或选择文件");
+        ['qr1','qr2','qr3','qr4'].forEach(id => {
+            sender.qrs.push(new QRious({ element: document.getElementById(id), size: 300, level: 'L' }));
+        });
+    },
+
+    handleFile: (file) => {
+        if (!file) return;
+        sender.fileName = file.name;
+        sender.fileSize = file.size;
         
-        // 准备数据
-        let u8;
-        if (app.fileData) u8 = new Uint8Array(app.fileData);
-        else u8 = new TextEncoder().encode(text);
+        // UI update
+        document.getElementById('send-filename').innerText = file.name;
+        document.getElementById('send-filesize').innerText = Utils.formatSize(file.size);
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('file-state').classList.remove('hidden');
         
-        app.fileName = app.fileName || "text_clip.txt";
+        // Read
+        const r = new FileReader();
+        r.onload = (e) => {
+            sender.fileBytes = new Uint8Array(e.target.result);
+            sender.prepareData();
+            document.getElementById('btn-start-send').disabled = false;
+        };
+        r.readAsArrayBuffer(file);
+    },
+
+    prepareData: () => {
+        if (!sender.fileBytes) return;
+        sender.chunks = [];
+        const total = sender.fileBytes.length;
+        const size = parseInt(sender.chunkSize);
         
-        // 切分原始块
-        sender.blocks = [];
-        for (let i = 0; i < u8.length; i += app.chunkSize) {
-            // 补齐最后一个块
-            let chunk = u8.slice(i, i + app.chunkSize);
-            if(chunk.length < app.chunkSize) {
-                const pad = new Uint8Array(app.chunkSize);
-                pad.set(chunk);
-                chunk = pad;
+        for (let i = 0; i < total; i += size) {
+            let chunk = sender.fileBytes.slice(i, i + size);
+            // Padding if needed (simplified for robustness: just send as is, receiver handles logic)
+            // But for XOR to work easily, uniform size is better.
+            if (chunk.length < size) {
+                const temp = new Uint8Array(size);
+                temp.set(chunk);
+                chunk = temp;
             }
-            sender.blocks.push(chunk);
+            sender.chunks.push(chunk);
         }
-
-        sender.tid = Math.floor(Math.random() * 900 + 100); // 3位随机ID
-        sender.packetCount = 0;
-        
-        document.getElementById('matrixControl').classList.remove('hidden');
-        sender.renderGridStructure();
-        sender.start();
     },
 
-    updateGridSize: (val) => {
-        sender.gridSize = parseInt(val);
-        document.getElementById('gridVal').innerText = `${val}x${val}`;
-        sender.renderGridStructure();
-    },
-
-    renderGridStructure: () => {
-        const container = document.getElementById('qrGrid');
-        container.style.gridTemplateColumns = `repeat(${sender.gridSize}, 1fr)`;
-        container.innerHTML = '';
-        sender.qrs = [];
-        for(let i=0; i<sender.gridSize*sender.gridSize; i++) {
-            const cvs = document.createElement('canvas');
-            cvs.className = 'qr-cell bg-white rounded-lg';
-            container.appendChild(cvs);
-            sender.qrs.push(new QRious({ element: cvs, size: 200, level: 'L' })); // L级别纠错即可，靠喷泉码纠错
+    toggle: () => {
+        if (sender.isSending) {
+            sender.stop();
+            document.getElementById('btn-start-send').innerText = "继续广播";
+            document.getElementById('matrix-container').classList.add('opacity-50', 'blur-sm');
+            document.getElementById('send-overlay').classList.remove('hidden');
+        } else {
+            sender.start();
         }
     },
 
     start: () => {
-        if(sender.timer) clearInterval(sender.timer);
-        sender.timer = setInterval(sender.tick, 100); // 10 FPS 刷新率
+        if (!sender.chunks.length) return;
+        sender.isSending = true;
+        sender.tid = Math.floor(Math.random() * 999).toString(36); // Short TID
+        document.getElementById('matrix-container').classList.remove('opacity-50', 'blur-sm');
+        document.getElementById('send-overlay').classList.add('hidden');
+        sender.timer = setInterval(sender.tick, 1000 / sender.fps);
     },
-    
+
+    restart: () => {
+        if (sender.isSending) {
+            clearInterval(sender.timer);
+            sender.timer = setInterval(sender.tick, 1000 / sender.fps);
+        }
+    },
+
     stop: () => {
-        if(sender.timer) clearInterval(sender.timer);
+        sender.isSending = false;
+        clearInterval(sender.timer);
     },
 
     tick: () => {
-        // 为网格中的每一个二维码生成一个新的喷泉包
-        sender.qrs.forEach(qr => {
+        // Update all 4 QRs
+        for(let i=0; i<4; i++) {
             sender.packetCount++;
-            // 协议: TID(3) | Seed(6) | TotalBlocks(4) | Data...
-            // Seed 采用简单的自增或随机，这里用随机数简化
-            const seed = Math.floor(Math.random() * 1000000);
-            const indices = LTCodec.getDropletSpecs(seed, sender.blocks.length);
+            const seed = Math.floor(Math.random() * 2000000);
             
-            // 执行异或
-            const selectedBlocks = indices.map(idx => sender.blocks[idx]);
-            const xoredData = LTCodec.xorChunks(selectedBlocks);
+            // LT Code Logic: Determine degree and neighbors
+            const total = sender.chunks.length;
+            const rand = Utils.PRNG(seed);
+            let degree = 1;
+            const r = rand();
+            // Soliton distribution simplified
+            if (r < 0.5) degree = 1;
+            else if (r < 0.8) degree = 2;
+            else degree = Math.min(total, Math.ceil(rand() * 5) + 2);
+
+            const indices = [];
+            while(indices.length < degree) {
+                const idx = Math.floor(rand() * total);
+                if(!indices.includes(idx)) indices.push(idx);
+            }
+
+            // XOR
+            const dataLen = parseInt(sender.chunkSize);
+            const xored = new Uint8Array(dataLen);
+            indices.forEach((idx, n) => {
+                const blk = sender.chunks[idx];
+                for(let b=0; b<dataLen; b++) xored[b] ^= blk[b];
+            });
+
+            // Convert to Base64
+            let binary = '';
+            const len = xored.byteLength;
+            for (let b = 0; b < len; b++) binary += String.fromCharCode(xored[b]);
+            const b64 = btoa(binary);
+
+            // Protocol: TID | Seed | TotalChunks | Data | Meta(Name:Size)
+            // Including meta in every packet is overhead but ensures instant UX.
+            // To save space, we put Name:Size at the end.
+            const meta = `${sender.fileName}:${sender.fileSize}`;
+            const payload = `${sender.tid}|${seed}|${total}|${b64}|${meta}`;
             
-            // 组装 Payload (使用 Base64 以便放入二维码)
-            // 格式: tid|seed|total|base64_data
-            // 优化: 二进制拼接会更省空间，但 JS 演示用字符串更易读
-            const b64Data = btoa(String.fromCharCode(...xoredData));
-            const payload = `${sender.tid}|${seed}|${sender.blocks.length}|${b64Data}|${app.fileName}`;
-            
-            qr.value = payload;
-        });
-        document.getElementById('sentPackets').innerText = sender.packetCount;
+            sender.qrs[i].value = payload;
+        }
+        document.getElementById('pkg-count').innerText = sender.packetCount;
     }
 };
 
-// ==========================================
-// 4. 接收端逻辑 (矩阵并行识别 + 剥洋葱解码)
-// ==========================================
+// ================= RECEIVER ENGINE =================
 const receiver = {
-    video: document.getElementById('video-hidden'),
-    canvas: document.getElementById('scan-canvas'),
+    video: document.getElementById('cam-video'),
+    canvas: document.getElementById('cam-canvas'),
     ctx: null,
+    stream: null,
     scanning: false,
+    
+    // Data State
     tid: null,
     totalBlocks: 0,
-    collectedPackets: new Set(), // 存已收到的 Seed，防重
-    solvedBlocks: {}, // 已解出的原始块 { index: Uint8Array }
-    dropletQueue: [], // 待处理的异或块 [{seed, indices, data}]
-    fileName: "",
+    fileSize: 0,
+    fileName: '',
+    collected: new Set(),
+    solved: {},
+    queue: [],
 
-    initCanvas: () => {
+    init: () => {
         receiver.ctx = receiver.canvas.getContext('2d', { willReadFrequently: true });
     },
 
-    toggleCamera: async () => {
-        if(receiver.scanning) {
-            receiver.scanning = false;
-            receiver.video.srcObject.getTracks().forEach(t => t.stop());
-            document.getElementById('btn-cam').innerText = "开启摄像头";
-            document.getElementById('btn-cam').classList.replace('bg-red-600', 'bg-emerald-600');
-            return;
-        }
-
+    start: async () => {
         try {
-            const facing = document.getElementById('cam-select').value;
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing } });
-            receiver.video.srcObject = stream;
-            receiver.video.play();
+            receiver.init();
+            receiver.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            receiver.video.srcObject = receiver.stream;
+            document.getElementById('cam-overlay').classList.add('hidden');
             receiver.scanning = true;
-            document.getElementById('btn-cam').innerText = "停止扫描";
-            document.getElementById('btn-cam').classList.replace('bg-emerald-600', 'bg-red-600');
-            requestAnimationFrame(receiver.scanLoop);
-            document.getElementById('recv-status').classList.remove('hidden');
+            requestAnimationFrame(receiver.loop);
         } catch (e) {
-            alert("摄像头启动失败: " + e.message);
+            alert('无法访问摄像头，请确保授权。');
         }
     },
 
-    scanLoop: () => {
-        if(!receiver.scanning) return;
-        if(receiver.video.readyState === receiver.video.HAVE_ENOUGH_DATA) {
-            const vid = receiver.video;
-            const cvs = receiver.canvas;
-            cvs.width = vid.videoWidth;
-            cvs.height = vid.videoHeight;
-            receiver.ctx.drawImage(vid, 0, 0, cvs.width, cvs.height);
+    stop: () => {
+        receiver.scanning = false;
+        if (receiver.stream) receiver.stream.getTracks().forEach(t => t.stop());
+        document.getElementById('cam-overlay').classList.remove('hidden');
+    },
 
-            // 动态切割扫描
-            // 策略：假设发送端可能是 1x1, 2x2, 3x3。
-            // 简单起见，我们在接收端把画面切成 2x2 和 3x3 两个模式尝试扫描，或者全屏扫描
-            // 为了性能，我们这里采用一种"滑动窗口"或者简单的"四分格"策略。
+    loop: () => {
+        if (!receiver.scanning) return;
+        
+        if (receiver.video.readyState === receiver.video.HAVE_ENOUGH_DATA) {
+            const W = receiver.video.videoWidth;
+            const H = receiver.video.videoHeight;
+            receiver.canvas.width = W;
+            receiver.canvas.height = H;
+            receiver.ctx.drawImage(receiver.video, 0, 0, W, H);
             
-            // 方案：将画面分为 2x2 区域，分别送入 jsQR
-            const w = cvs.width;
-            const h = cvs.height;
-            const halfW = w / 2;
-            const halfH = h / 2;
-            
-            // 定义扫描区域 (x, y, w, h, id)
-            // 包含全屏 + 4个象限，确保兼容单码和矩阵码
+            // Define 5 regions: Full, TL, TR, BL, BR
+            const midX = W/2, midY = H/2;
             const regions = [
-                {x:0, y:0, w:w, h:h, id:'full'},
-                {x:0, y:0, w:halfW, h:halfH, id:'tl'},
-                {x:halfW, y:0, w:halfW, h:halfH, id:'tr'},
-                {x:0, y:halfH, w:halfW, h:halfH, id:'bl'},
-                {x:halfW, y:halfH, w:halfW, h:halfH, id:'br'}
+                { id: 'full', x: 0, y: 0, w: W, h: H },
+                { id: 'q-tl', x: 0, y: 0, w: midX, h: midY },
+                { id: 'q-tr', x: midX, y: 0, w: midX, h: midY },
+                { id: 'q-bl', x: 0, y: midY, w: midX, h: midY },
+                { id: 'q-br', x: midX, y: midY, w: midX, h: midY }
             ];
 
-            const overlay = document.getElementById('grid-overlay');
-            overlay.innerHTML = ''; // 清空上一帧的反馈
+            // Reset visual feedback
+            document.querySelectorAll('.scan-quadrant').forEach(el => el.classList.remove('active'));
 
             regions.forEach(r => {
                 const imgData = receiver.ctx.getImageData(r.x, r.y, r.w, r.h);
+                // jsQR scan
                 const code = jsQR(imgData.data, r.w, r.h, { inversionAttempts: "dontInvert" });
                 
-                if(code && code.data) {
-                    // 视觉反馈：在对应区域画框
-                    const cell = document.createElement('div');
-                    cell.className = 'scan-grid-cell active';
-                    cell.style.position = 'absolute';
-                    cell.style.left = (r.x/w*100)+'%';
-                    cell.style.top = (r.y/h*100)+'%';
-                    cell.style.width = (r.w/w*100)+'%';
-                    cell.style.height = (r.h/h*100)+'%';
-                    overlay.appendChild(cell);
-
-                    receiver.processPacket(code.data);
+                if (code) {
+                    // Visual feedback
+                    if (r.id !== 'full') {
+                        document.getElementById(r.id).classList.add('active');
+                    }
+                    receiver.parse(code.data);
                 }
             });
         }
-        requestAnimationFrame(receiver.scanLoop);
+        requestAnimationFrame(receiver.loop);
     },
 
-    processPacket: (str) => {
-        // 格式: tid|seed|total|base64_data|filename
+    parse: (str) => {
+        // Protocol: TID | Seed | Total | B64 | Meta
         const p = str.split('|');
-        if(p.length < 5) return;
-        
+        if (p.length < 5) return;
+
         const tid = p[0];
         const seed = parseInt(p[1]);
         const total = parseInt(p[2]);
         const b64 = p[3];
-        const fname = p[4];
+        const meta = p.slice(4).join('|'); // Join back in case filename has |
 
-        // 新任务重置
-        if(receiver.tid !== tid) {
+        // Reset if new file
+        if (receiver.tid !== tid) {
             receiver.tid = tid;
             receiver.totalBlocks = total;
+            const [fname, fsize] = meta.split(':');
             receiver.fileName = fname;
-            receiver.collectedPackets.clear();
-            receiver.solvedBlocks = {};
-            receiver.dropletQueue = [];
-            document.getElementById('stat-total').innerText = total;
-            document.getElementById('progress-bar').style.width = '0%';
-            document.getElementById('download-area').classList.add('hidden');
+            receiver.fileSize = parseInt(fsize);
+            
+            // Reset logic
+            receiver.collected.clear();
+            receiver.solved = {};
+            receiver.queue = [];
+            
+            // UI Update
+            document.getElementById('recv-idle').classList.add('hidden');
+            document.getElementById('recv-active').classList.remove('hidden');
+            document.getElementById('recv-name').innerText = fname;
+            document.getElementById('recv-size').innerText = Utils.formatSize(receiver.fileSize);
+            document.getElementById('recv-success').classList.add('hidden');
         }
 
-        if(receiver.collectedPackets.has(seed)) return; // 已处理过该包
-        receiver.collectedPackets.add(seed);
-        document.getElementById('stat-collected').innerText = receiver.collectedPackets.size;
+        if (receiver.collected.has(seed)) return;
+        receiver.collected.add(seed);
 
-        // 解码 Payload
-        const binStr = atob(b64);
-        const data = new Uint8Array(binStr.length);
-        for(let i=0; i<binStr.length; i++) data[i] = binStr.charCodeAt(i);
-
-        // 还原 indices
-        const indices = LTCodec.getDropletSpecs(seed, total);
+        // UI progress update
+        document.getElementById('collected-count').innerText = receiver.collected.size;
         
-        // 入队并尝试剥洋葱
-        receiver.dropletQueue.push({ indices, data });
-        receiver.trySolve();
+        // Decode
+        const bin = atob(b64);
+        const data = new Uint8Array(bin.length);
+        for(let i=0; i<bin.length; i++) data[i] = bin.charCodeAt(i);
+
+        // Reconstruct indices
+        const rand = Utils.PRNG(seed);
+        let degree = 1;
+        const r = rand();
+        if (r < 0.5) degree = 1;
+        else if (r < 0.8) degree = 2;
+        else degree = Math.min(total, Math.ceil(rand() * 5) + 2);
+
+        const indices = [];
+        while(indices.length < degree) {
+            const idx = Math.floor(rand() * total);
+            if(!indices.includes(idx)) indices.push(idx);
+        }
+
+        receiver.queue.push({ indices, data });
+        receiver.solve();
     },
 
-    trySolve: () => {
-        let progress = false;
-        do {
+    solve: () => {
+        let progress = true;
+        while(progress) {
             progress = false;
-            // 1. 移除已知的块
-            receiver.dropletQueue.forEach(drop => {
-                // 过滤掉 indices 中已经solved的
-                const needed = drop.indices.filter(idx => !receiver.solvedBlocks[idx]);
-                
-                // 如果过滤后变少了，说明原先indices里有些已经解出来了，需要异或掉
-                if(needed.length < drop.indices.length) {
-                    const solvedIndices = drop.indices.filter(idx => receiver.solvedBlocks[idx]);
-                    solvedIndices.forEach(idx => {
-                        const solvedData = receiver.solvedBlocks[idx];
-                        // XOR out the solved block
-                        for(let i=0; i<drop.data.length; i++) drop.data[i] ^= solvedData[i];
+            // Remove solved blocks from queue items
+            receiver.queue.forEach(item => {
+                const needed = item.indices.filter(idx => !receiver.solved[idx]);
+                if (needed.length < item.indices.length) {
+                    // XOR out known blocks
+                    item.indices.forEach(idx => {
+                        if (receiver.solved[idx]) {
+                            const known = receiver.solved[idx];
+                            for(let i=0; i<item.data.length; i++) item.data[i] ^= known[i];
+                        }
                     });
-                    // 更新该 droplet 的 indices 为剩余未解的
-                    drop.indices = needed;
+                    item.indices = needed;
+                    progress = true; // Changes happened
                 }
             });
 
-            // 2. 寻找度为1的包 (Solvable)
-            const solvable = receiver.dropletQueue.find(d => d.indices.length === 1);
-            if(solvable) {
+            // Find degree-1 blocks
+            const solvable = receiver.queue.find(item => item.indices.length === 1);
+            if (solvable) {
                 const idx = solvable.indices[0];
-                if(!receiver.solvedBlocks[idx]) {
-                    receiver.solvedBlocks[idx] = solvable.data;
-                    progress = true; // 只要解出一个，就需要重新跑一遍循环，因为这个新解出的块可能引发连锁反应
+                if (!receiver.solved[idx]) {
+                    receiver.solved[idx] = solvable.data;
+                    progress = true;
+                    receiver.updateProgress();
                 }
-                // 从队列中移除已完全解决的包 (或者 indices 为空的包)
-                receiver.dropletQueue = receiver.dropletQueue.filter(d => d.indices.length > 0);
+                // Cleanup
+                receiver.queue = receiver.queue.filter(i => i.indices.length > 0);
             }
-
-        } while(progress);
-
-        receiver.updateProgress();
+        }
     },
 
     updateProgress: () => {
-        const solvedCount = Object.keys(receiver.solvedBlocks).length;
-        const pct = Math.floor((solvedCount / receiver.totalBlocks) * 100);
-        document.getElementById('progress-txt').innerText = pct + '%';
+        const done = Object.keys(receiver.solved).length;
+        const pct = Math.floor((done / receiver.totalBlocks) * 100);
         document.getElementById('progress-bar').style.width = pct + '%';
+        document.getElementById('progress-text').innerText = pct + '%';
 
-        if(solvedCount === receiver.totalBlocks && receiver.totalBlocks > 0) {
-            receiver.finalize();
+        if (done >= receiver.totalBlocks) {
+            receiver.finish();
         }
     },
 
-    finalize: () => {
-        if(!document.getElementById('download-area').classList.contains('hidden')) return;
+    finish: () => {
+        receiver.scanning = false;
+        document.getElementById('recv-success').classList.remove('hidden');
         
-        receiver.scanning = false; // 停止扫描节省性能
-        document.getElementById('download-area').classList.remove('hidden');
+        // Reassemble
+        const chunks = [];
+        for(let i=0; i<receiver.totalBlocks; i++) chunks.push(receiver.solved[i]);
         
-        // 拼装文件
-        // 需去掉padding，但简化版暂不处理，直接拼接
-        const totalSize = receiver.totalBlocks * app.chunkSize; // 近似大小
-        const finalBuffer = new Uint8Array(receiver.totalBlocks * app.chunkSize);
-        
-        for(let i=0; i<receiver.totalBlocks; i++) {
-            finalBuffer.set(receiver.solvedBlocks[i], i * app.chunkSize);
-        }
+        // Merge
+        const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
+        const fileData = new Uint8Array(totalLen);
+        let offset = 0;
+        chunks.forEach(c => {
+            fileData.set(c, offset);
+            offset += c.length;
+        });
 
-        // 去除末尾空字节 (简单处理：寻找最后一个非0字节，或者依赖文件格式，这里不做复杂去空)
-        const blob = new Blob([finalBuffer]);
-        const btn = document.getElementById('dl-btn');
-        btn.onclick = () => {
+        // Slice to exact size (remove padding)
+        const finalData = fileData.slice(0, receiver.fileSize);
+        const blob = new Blob([finalData]);
+        
+        document.getElementById('dl-btn').onclick = () => {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = receiver.fileName;
@@ -501,19 +608,8 @@ const receiver = {
     }
 };
 
-// 文件输入监听
-document.getElementById('fileInput').onchange = (e) => {
-    const f = e.target.files[0];
-    if(!f) return;
-    const r = new FileReader();
-    r.onload = (ev) => {
-        app.fileData = ev.target.result;
-        app.fileName = f.name;
-        document.getElementById('fileName').innerText = f.name;
-        document.getElementById('fileInfo').classList.remove('hidden');
-    };
-    r.readAsArrayBuffer(f);
-};
+// Start
+sender.init();
 </script>
 </body>
 </html>
