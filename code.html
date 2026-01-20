@@ -3,407 +3,377 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AirScan Pro | 光学矩阵传输</title>
+    <title>AirScan Ultimate | 全能光学传输</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        /* 隐藏滚动条 */
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
-        
+        body { font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
         .matrix-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            grid-template-rows: 1fr 1fr; 
-            gap: 8px; 
-            width: 100%; 
-            aspect-ratio: 1/1;
-            padding: 8px;
-            background: #f8fafc;
-            border-radius: 20px;
+            display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 4px; 
+            width: 100%; aspect-ratio: 1/1; padding: 4px; background: #f1f5f9; border-radius: 16px;
         }
-        canvas.qr-cell { width: 100% !important; height: 100% !important; border-radius: 8px; image-rendering: pixelated; }
+        canvas.qr-cell { width: 100% !important; height: 100% !important; border-radius: 6px; image-rendering: pixelated; }
+        .scan-mask { position: absolute; inset: 0; pointer-events: none; border-radius: 12px; overflow: hidden;}
+        .scan-quadrant { border: 1px dashed rgba(255,255,255,0.2); box-sizing: border-box; transition: background 0.1s; }
+        .scan-quadrant.active { background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981; }
         
-        /* 扫描遮罩 */
-        .scan-mask { position: absolute; inset: 0; pointer-events: none; border-radius: 16px; overflow: hidden;}
-        .scan-quadrant { border: 1px dashed rgba(255,255,255,0.3); box-sizing: border-box; transition: all 0.2s; }
-        .scan-quadrant.active { background: rgba(16, 185, 129, 0.3); border: 2px solid #10b981; }
-
-        input[type=range] { -webkit-appearance: none; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #3b82f6; margin-top: -8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #e2e8f0; border-radius: 2px; }
-
-        dialog::backdrop { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        /* 隐藏滚动条但保留功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-safe">
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col overflow-hidden">
 
-<div class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-2xl overflow-hidden relative">
+<header class="bg-white px-4 py-3 shadow-sm z-20 flex justify-between items-center shrink-0">
+    <div>
+        <h1 class="text-lg font-black tracking-tighter text-slate-900">AirScan <span class="text-indigo-600">Ultimate</span></h1>
+        <p class="text-[10px] text-slate-400 font-mono">FOUNTAIN CODE MATRIX PROTOCOL</p>
+    </div>
+    <div class="flex bg-slate-100 p-1 rounded-lg">
+        <button onclick="app.switchTab('send')" id="tab-s" class="px-4 py-1.5 rounded-md text-xs font-bold bg-white text-indigo-600 shadow-sm transition-all">发送</button>
+        <button onclick="app.switchTab('receive')" id="tab-r" class="px-4 py-1.5 rounded-md text-xs font-bold text-slate-500 transition-all">接收</button>
+    </div>
+</header>
+
+<main id="panel-send" class="flex-1 flex flex-col overflow-y-auto no-scrollbar p-4 space-y-4 max-w-lg mx-auto w-full">
     
-    <header class="px-6 pt-8 pb-4 flex justify-between items-center bg-white sticky top-0 z-10 border-b border-slate-100">
-        <div>
-            <h1 class="text-xl font-black tracking-tight text-slate-900">AirScan <span class="text-blue-600">Pro</span></h1>
-            <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">Matrix Fountain Protocol</p>
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex gap-4 mb-4 border-b border-slate-100 pb-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="inputType" value="file" checked onchange="sender.toggleInputMode('file')" class="accent-indigo-600">
+                <span class="text-sm font-bold">文件模式</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="inputType" value="text" onchange="sender.toggleInputMode('text')" class="accent-indigo-600">
+                <span class="text-sm font-bold">纯文本模式</span>
+            </label>
         </div>
-        <button onclick="document.getElementById('helpModal').showModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-lg hover:bg-slate-200 transition">?</button>
-    </header>
 
-    <div class="px-6 py-2">
-        <div class="flex bg-slate-100 p-1 rounded-2xl relative font-bold text-sm">
-            <button onclick="app.switchTab('send')" id="tab-s" class="flex-1 py-2.5 rounded-xl shadow-sm bg-white text-blue-600 transition-all z-10">发送文件</button>
-            <button onclick="app.switchTab('receive')" id="tab-r" class="flex-1 py-2.5 rounded-xl text-slate-400 transition-all z-10">接收文件</button>
+        <div id="input-file-area">
+            <div id="drop-zone" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:bg-slate-50 hover:border-indigo-400 transition cursor-pointer">
+                <div class="text-3xl mb-2">📂</div>
+                <p class="text-xs text-slate-500 font-medium">点击选择或拖拽文件</p>
+            </div>
+            <input type="file" id="fileInput" class="hidden" onchange="sender.handleFile(this.files[0])">
+        </div>
+
+        <div id="input-text-area" class="hidden">
+            <textarea id="textInput" class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 outline-none h-24 resize-none" placeholder="在此粘贴文本内容..."></textarea>
+            <button onclick="sender.handleText()" class="mt-2 w-full py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100">确认文本内容</button>
+        </div>
+
+        <div id="selected-info" class="hidden mt-4 bg-indigo-50 border border-indigo-100 rounded-lg p-3 flex justify-between items-center">
+            <div class="overflow-hidden">
+                <p id="send-name" class="text-xs font-bold text-indigo-900 truncate">filename.txt</p>
+                <p id="send-size" class="text-[10px] text-indigo-600 font-mono">0 KB</p>
+            </div>
+            <button onclick="sender.reset()" class="text-xs font-bold text-red-500 px-2">重置</button>
         </div>
     </div>
 
-    <main id="panel-send" class="flex-1 px-6 py-4 flex flex-col space-y-4 overflow-y-auto">
-        
-        <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl p-6 text-center transition hover:border-blue-400 group relative">
-            <div id="empty-state">
-                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl group-hover:scale-110 transition">📂</div>
-                <h3 class="text-sm font-bold text-slate-700">点击选择或拖入文件</h3>
-                <p class="text-xs text-slate-400 mt-1">支持图片、文档、压缩包</p>
+    <details class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+        <summary class="text-xs font-bold text-slate-500 cursor-pointer list-none flex justify-between">
+            <span>传输参数 (FPS: <span id="val-fps">15</span>, Size: <span id="val-size">250</span>)</span>
+            <span>⚙️</span>
+        </summary>
+        <div class="mt-4 space-y-3">
+            <div class="flex items-center gap-3">
+                <span class="text-xs w-12 text-slate-400">FPS</span>
+                <input type="range" min="5" max="30" value="15" class="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" oninput="sender.updateSettings('fps', this.value)">
             </div>
-            
-            <div id="file-state" class="hidden">
-                <div class="flex items-center gap-3 text-left">
-                    <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xs shadow-lg shadow-blue-200">FILE</div>
-                    <div class="flex-1 min-w-0">
-                        <p id="send-filename" class="text-sm font-bold text-slate-800 truncate">example.zip</p>
-                        <p id="send-filesize" class="text-xs text-slate-500 font-mono">2.4 MB</p>
-                    </div>
-                    <button onclick="app.resetFile(event)" class="p-2 text-slate-300 hover:text-red-500 transition">✕</button>
-                </div>
-            </div>
-            
-            <input type="file" id="fileInput" class="absolute inset-0 opacity-0 cursor-pointer" onchange="sender.handleFile(this.files[0])">
-        </div>
-
-        <div class="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
-            <div class="flex justify-between items-center cursor-pointer" onclick="document.getElementById('adv-settings').classList.toggle('hidden')">
-                <span class="text-xs font-bold text-slate-500 uppercase">传输参数配置</span>
-                <span class="text-xs text-blue-500">修改 ▼</span>
-            </div>
-            <div id="adv-settings" class="hidden mt-4 space-y-4 border-t border-slate-100 pt-4">
-                <div>
-                    <div class="flex justify-between text-xs mb-2">
-                        <span class="text-slate-500">刷新率 (FPS)</span>
-                        <span id="disp-fps" class="font-mono font-bold text-slate-700">15</span>
-                    </div>
-                    <input type="range" min="5" max="30" value="15" oninput="sender.fps=this.value; document.getElementById('disp-fps').innerText=this.value; sender.restart()">
-                </div>
-                <div>
-                    <div class="flex justify-between text-xs mb-2">
-                        <span class="text-slate-500">单帧容量 (Bytes)</span>
-                        <span id="disp-size" class="font-mono font-bold text-slate-700">250</span>
-                    </div>
-                    <input type="range" min="100" max="600" step="10" value="250" oninput="sender.chunkSize=this.value; document.getElementById('disp-size').innerText=this.value; sender.prepareData()">
-                </div>
+            <div class="flex items-center gap-3">
+                <span class="text-xs w-12 text-slate-400">Size</span>
+                <input type="range" min="100" max="800" value="250" step="10" class="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" oninput="sender.updateSettings('size', this.value)">
             </div>
         </div>
+    </details>
 
-        <div class="flex-1 flex flex-col justify-center min-h-[300px] relative">
-            <div id="matrix-container" class="matrix-grid opacity-50 blur-sm transition duration-500">
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex-1 flex flex-col">
+        <div class="relative flex-1 min-h-[250px] flex items-center justify-center">
+            <div id="matrix-container" class="matrix-grid opacity-30 blur-[2px] transition duration-300">
                 <canvas id="qr1" class="qr-cell"></canvas>
                 <canvas id="qr2" class="qr-cell"></canvas>
                 <canvas id="qr3" class="qr-cell"></canvas>
                 <canvas id="qr4" class="qr-cell"></canvas>
             </div>
-            
-            <div id="send-overlay" class="absolute inset-0 flex items-center justify-center">
-                <button id="btn-start-send" onclick="sender.toggle()" disabled class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold shadow-xl shadow-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95 transition">
-                    开始广播
-                </button>
+            <div id="send-overlay" class="absolute inset-0 flex items-center justify-center z-10">
+                <button id="btn-send-start" onclick="sender.start()" disabled class="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold shadow-lg disabled:bg-slate-300 disabled:shadow-none transition transform active:scale-95">开始广播</button>
             </div>
         </div>
         
-        <p class="text-center text-[10px] text-slate-400 font-mono">PACKETS SENT: <span id="pkg-count" class="text-slate-800">0</span></p>
-    </main>
+        <div id="send-controls" class="hidden mt-4 pt-4 border-t border-slate-100 flex justify-between items-center animate-fade-in">
+            <div class="text-xs font-mono text-slate-400">PKGS: <span id="pkg-counter" class="text-slate-800 font-bold">0</span></div>
+            <button onclick="sender.stop()" class="bg-red-50 text-red-500 px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-100">⏹ 停止广播</button>
+        </div>
+    </div>
+</main>
 
-    <main id="panel-receive" class="hidden flex-1 px-6 py-4 flex flex-col space-y-4">
-        <div class="bg-slate-900 rounded-[2rem] p-1 shadow-2xl relative aspect-[3/4] overflow-hidden">
-            <video id="cam-video" class="hidden" autoplay playsinline></video>
-            <canvas id="cam-canvas" class="w-full h-full object-cover rounded-[1.8rem] bg-slate-800"></canvas>
+<main id="panel-receive" class="hidden flex-1 flex flex-col p-4 space-y-4 max-w-lg mx-auto w-full h-full">
+    
+    <div class="flex gap-2 justify-center">
+        <button onclick="receiver.setSource('environment')" class="flex-1 bg-white border border-slate-200 py-2 rounded-lg text-xs font-bold shadow-sm hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500">📷 后置镜头</button>
+        <button onclick="receiver.setSource('user')" class="flex-1 bg-white border border-slate-200 py-2 rounded-lg text-xs font-bold shadow-sm hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500">🤳 前置镜头</button>
+        <button onclick="receiver.setSource('screen')" class="flex-1 bg-white border border-slate-200 py-2 rounded-lg text-xs font-bold shadow-sm hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500">💻 屏幕/窗口</button>
+    </div>
+
+    <div class="relative bg-black rounded-2xl overflow-hidden shadow-md flex-1 min-h-[300px]">
+        <video id="rx-video" autoplay playsinline class="hidden"></video>
+        <canvas id="rx-canvas" class="w-full h-full object-cover"></canvas>
+        
+        <div class="scan-mask grid grid-cols-2 grid-rows-2">
+            <div id="q-tl" class="scan-quadrant border-r border-b"></div>
+            <div id="q-tr" class="scan-quadrant border-b"></div>
+            <div id="q-bl" class="scan-quadrant border-r"></div>
+            <div id="q-br" class="scan-quadrant"></div>
+        </div>
+
+        <div id="rx-overlay" class="absolute inset-0 bg-slate-900/80 flex flex-col items-center justify-center text-white z-20">
+            <div class="text-4xl mb-4 animate-bounce">📡</div>
+            <p class="text-sm font-bold">请选择上方的视频源开始</p>
+        </div>
+    </div>
+
+    <div id="rx-status-card" class="bg-white p-4 rounded-2xl shadow-lg border border-slate-100 hidden">
+        <div id="rx-progress-view">
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <h3 id="rx-filename" class="text-sm font-black text-slate-800 break-all line-clamp-1">正在连接...</h3>
+                    <p id="rx-filesize" class="text-xs text-slate-500 font-mono">-- MB</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">ETA</p>
+                    <p id="rx-eta" class="text-sm font-mono font-bold text-indigo-600">--:--</p>
+                </div>
+            </div>
             
-            <div class="scan-mask grid grid-cols-2 grid-rows-2">
-                <div id="q-tl" class="scan-quadrant border-r border-b"></div>
-                <div id="q-tr" class="scan-quadrant border-b"></div>
-                <div id="q-bl" class="scan-quadrant border-r"></div>
-                <div id="q-br" class="scan-quadrant"></div>
-            </div>
-
-            <div id="cam-overlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm z-20">
-                <button onclick="receiver.start()" class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-blue-500/50 animate-pulse">📷</button>
-                <p class="text-white text-xs font-bold mt-4">点击开启摄像头</p>
-            </div>
-        </div>
-
-        <div class="bg-white border border-slate-100 rounded-3xl p-5 shadow-lg relative overflow-hidden">
-            <div id="recv-idle" class="text-center py-2">
-                <p class="text-sm font-bold text-slate-400">等待信号...</p>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+                <div id="rx-bar" class="h-full bg-indigo-500 w-0 transition-all duration-300"></div>
             </div>
             
-            <div id="recv-active" class="hidden space-y-3">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Incoming File</p>
-                        <p id="recv-name" class="text-sm font-bold text-slate-800 break-all leading-tight">--</p>
-                    </div>
-                    <span id="recv-size" class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-lg font-mono font-bold">0 KB</span>
-                </div>
-                
-                <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
-                    <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 w-0 transition-all duration-300"></div>
-                </div>
-                
-                <div class="flex justify-between text-[10px] font-mono font-bold text-slate-400">
-                    <span>PKGS: <span id="collected-count" class="text-blue-600">0</span></span>
-                    <span id="progress-text">0%</span>
-                </div>
-            </div>
-
-            <div id="recv-success" class="hidden absolute inset-0 bg-emerald-500 flex flex-col items-center justify-center text-white z-30">
-                <div class="text-3xl mb-2">🎉</div>
-                <p class="font-bold text-sm">接收完成</p>
-                <button id="dl-btn" class="mt-4 bg-white text-emerald-600 px-6 py-2 rounded-xl font-bold text-xs shadow-lg">下载文件</button>
+            <div class="flex justify-between items-center text-[10px] text-slate-500 font-mono font-bold">
+                <span><span id="rx-pct">0</span>%</span>
+                <button onclick="receiver.stop()" class="bg-slate-100 text-slate-600 px-3 py-1 rounded hover:bg-slate-200">⏹ 中止</button>
             </div>
         </div>
-    </main>
 
-    <dialog id="helpModal" class="p-0 rounded-3xl max-w-xs shadow-2xl backdrop:bg-slate-900/50">
-        <div class="p-6 bg-white">
-            <h3 class="text-lg font-black text-slate-800 mb-4">如何使用 AirScan Pro</h3>
-            <ul class="space-y-4 text-sm text-slate-600">
-                <li class="flex gap-3">
-                    <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex-none flex items-center justify-center font-bold text-xs">1</span>
-                    <p>在发送端选择文件。系统会将文件切割并通过 4 个二维码并行广播。</p>
-                </li>
-                <li class="flex gap-3">
-                    <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex-none flex items-center justify-center font-bold text-xs">2</span>
-                    <p>在接收端打开摄像头，对准发送端的 2x2 矩阵。</p>
-                </li>
-                <li class="flex gap-3">
-                    <span class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex-none flex items-center justify-center font-bold text-xs">3</span>
-                    <p>利用<b>喷泉码</b>技术，无需对齐每一帧。只要收集到足够的数据包，文件即可还原。</p>
-                </li>
-            </ul>
-            <form method="dialog" class="mt-6">
-                <button class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm">我知道了</button>
-            </form>
+        <div id="rx-complete-view" class="hidden text-center py-2">
+            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">✓</div>
+            <h3 class="text-slate-800 font-bold mb-1">接收完成</h3>
+            <div class="flex justify-center gap-4 text-xs text-slate-500 mb-4 font-mono">
+                <span>耗时: <span id="rx-stat-time" class="text-slate-800 font-bold">0s</span></span>
+                <span>包数: <span id="rx-stat-pkgs" class="text-slate-800 font-bold">0</span></span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="receiver.reset()" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm">重置</button>
+                <button id="btn-download" class="flex-[2] py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200">下载文件</button>
+            </div>
         </div>
-    </dialog>
-
-</div>
+    </div>
+</main>
 
 <script>
-// ================= UTILS =================
+// ================= 工具库 =================
 const Utils = {
-    formatSize: (bytes) => {
-        if (bytes === 0) return '0 B';
-        const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    formatSize: (b) => {
+        if(b===0) return '0 B';
+        const k=1024, s=['B','KB','MB','GB'];
+        const i=Math.floor(Math.log(b)/Math.log(k));
+        return parseFloat((b/Math.pow(k,i)).toFixed(2))+' '+s[i];
     },
-    // 简易PRNG，保证收发端一致
-    PRNG: (seed) => () => {
-        let t = seed += 0x6D2B79F5;
-        t = Math.imul(t ^ t >>> 15, t | 1);
-        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-        return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    }
-};
-
-// ================= APP STATE =================
-const app = {
-    activeTab: 'send',
-    switchTab: (tab) => {
-        app.activeTab = tab;
-        ['send', 'receive'].forEach(t => {
-            const active = t === tab;
-            document.getElementById(`panel-${t}`).classList.toggle('hidden', !active);
-            const btn = document.getElementById(`tab-${t[0]}`);
-            if(active) {
-                btn.className = 'flex-1 py-2.5 rounded-xl shadow-sm bg-white text-blue-600 transition-all z-10';
-            } else {
-                btn.className = 'flex-1 py-2.5 rounded-xl text-slate-400 transition-all z-10';
-            }
-        });
-        if (tab === 'receive') {
-            sender.stop();
-        } else {
-            receiver.stop();
+    formatTime: (sec) => {
+        if(!isFinite(sec) || sec < 0) return "--:--";
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return `${m}:${s<10?'0':''}${s}`;
+    },
+    PRNG: (seed) => {
+        return () => {
+            let t = seed += 0x6D2B79F5;
+            t = Math.imul(t ^ t >>> 15, t | 1);
+            t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
         }
-    },
-    resetFile: (e) => {
-        if(e) e.stopPropagation();
-        document.getElementById('fileInput').value = '';
-        document.getElementById('empty-state').classList.remove('hidden');
-        document.getElementById('file-state').classList.add('hidden');
-        document.getElementById('btn-start-send').disabled = true;
-        document.getElementById('matrix-container').classList.add('opacity-50', 'blur-sm');
-        document.getElementById('send-overlay').classList.remove('hidden');
-        document.getElementById('btn-start-send').innerText = "开始广播";
-        sender.stop();
     }
 };
 
-// ================= SENDER ENGINE =================
+// ================= APP 控制 =================
+const app = {
+    switchTab: (t) => {
+        document.getElementById('panel-send').classList.toggle('hidden', t!=='send');
+        document.getElementById('panel-receive').classList.toggle('hidden', t!=='receive');
+        
+        const btnS = document.getElementById('tab-s');
+        const btnR = document.getElementById('tab-r');
+        
+        if(t==='send') {
+            btnS.className = "px-4 py-1.5 rounded-md text-xs font-bold bg-white text-indigo-600 shadow-sm transition-all";
+            btnR.className = "px-4 py-1.5 rounded-md text-xs font-bold text-slate-500 transition-all";
+            receiver.stop(); // 切走时关闭接收
+        } else {
+            btnR.className = "px-4 py-1.5 rounded-md text-xs font-bold bg-white text-indigo-600 shadow-sm transition-all";
+            btnS.className = "px-4 py-1.5 rounded-md text-xs font-bold text-slate-500 transition-all";
+            sender.stop(); // 切走时停止发送
+        }
+    }
+};
+
+// ================= 发送端逻辑 =================
 const sender = {
-    fileBytes: null,
-    fileName: "",
-    fileSize: 0,
+    data: null,
+    meta: { name: "", size: 0 },
     chunks: [],
-    
-    // Settings
     fps: 15,
     chunkSize: 250,
-    
-    // Runtime
     timer: null,
     tid: null,
     packetCount: 0,
     qrs: [],
-    isSending: false,
-
+    
     init: () => {
         ['qr1','qr2','qr3','qr4'].forEach(id => {
             sender.qrs.push(new QRious({ element: document.getElementById(id), size: 300, level: 'L' }));
         });
     },
 
-    handleFile: (file) => {
-        if (!file) return;
-        sender.fileName = file.name;
-        sender.fileSize = file.size;
-        
-        // UI update
-        document.getElementById('send-filename').innerText = file.name;
-        document.getElementById('send-filesize').innerText = Utils.formatSize(file.size);
-        document.getElementById('empty-state').classList.add('hidden');
-        document.getElementById('file-state').classList.remove('hidden');
-        
-        // Read
+    toggleInputMode: (mode) => {
+        document.getElementById('input-file-area').classList.toggle('hidden', mode !== 'file');
+        document.getElementById('input-text-area').classList.toggle('hidden', mode !== 'text');
+        sender.reset(); // 切换模式时重置数据
+    },
+
+    handleFile: (f) => {
+        if(!f) return;
+        sender.meta = { name: f.name, size: f.size };
         const r = new FileReader();
         r.onload = (e) => {
-            sender.fileBytes = new Uint8Array(e.target.result);
-            sender.prepareData();
-            document.getElementById('btn-start-send').disabled = false;
+            sender.data = new Uint8Array(e.target.result);
+            sender.uiReady();
         };
-        r.readAsArrayBuffer(file);
+        r.readAsArrayBuffer(f);
     },
 
-    prepareData: () => {
-        if (!sender.fileBytes) return;
-        sender.chunks = [];
-        const total = sender.fileBytes.length;
-        const size = parseInt(sender.chunkSize);
+    handleText: () => {
+        const txt = document.getElementById('textInput').value;
+        if(!txt) return alert("请输入文本");
+        const enc = new TextEncoder();
+        sender.data = enc.encode(txt);
+        sender.meta = { name: "text_snippet.txt", size: sender.data.length };
+        sender.uiReady();
+    },
+
+    uiReady: () => {
+        document.getElementById('selected-info').classList.remove('hidden');
+        document.getElementById('send-name').innerText = sender.meta.name;
+        document.getElementById('send-size').innerText = Utils.formatSize(sender.meta.size);
+        document.getElementById('btn-send-start').disabled = false;
         
-        for (let i = 0; i < total; i += size) {
-            let chunk = sender.fileBytes.slice(i, i + size);
-            // Padding if needed (simplified for robustness: just send as is, receiver handles logic)
-            // But for XOR to work easily, uniform size is better.
-            if (chunk.length < size) {
-                const temp = new Uint8Array(size);
-                temp.set(chunk);
-                chunk = temp;
+        // 切块准备
+        sender.chunks = [];
+        const size = parseInt(sender.chunkSize);
+        for(let i=0; i<sender.data.length; i+=size) {
+            let blk = sender.data.slice(i, i+size);
+            if(blk.length < size) {
+                const tmp = new Uint8Array(size);
+                tmp.set(blk);
+                blk = tmp;
             }
-            sender.chunks.push(chunk);
+            sender.chunks.push(blk);
         }
     },
 
-    toggle: () => {
-        if (sender.isSending) {
-            sender.stop();
-            document.getElementById('btn-start-send').innerText = "继续广播";
-            document.getElementById('matrix-container').classList.add('opacity-50', 'blur-sm');
-            document.getElementById('send-overlay').classList.remove('hidden');
-        } else {
-            sender.start();
-        }
+    reset: () => {
+        sender.stop();
+        sender.data = null;
+        sender.chunks = [];
+        document.getElementById('fileInput').value = '';
+        document.getElementById('textInput').value = '';
+        document.getElementById('selected-info').classList.add('hidden');
+        document.getElementById('btn-send-start').disabled = true;
+    },
+
+    updateSettings: (key, val) => {
+        sender[key] = val;
+        document.getElementById(`val-${key}`).innerText = val;
+        if(sender.timer) sender.restart(); // 实时生效
     },
 
     start: () => {
-        if (!sender.chunks.length) return;
-        sender.isSending = true;
-        sender.tid = Math.floor(Math.random() * 999).toString(36); // Short TID
-        document.getElementById('matrix-container').classList.remove('opacity-50', 'blur-sm');
+        if(!sender.chunks.length) return;
+        sender.tid = Math.floor(Math.random()*999).toString(36);
+        sender.packetCount = 0;
+        document.getElementById('matrix-container').classList.remove('opacity-30', 'blur-[2px]');
         document.getElementById('send-overlay').classList.add('hidden');
-        sender.timer = setInterval(sender.tick, 1000 / sender.fps);
+        document.getElementById('send-controls').classList.remove('hidden');
+        sender.restart();
     },
 
     restart: () => {
-        if (sender.isSending) {
-            clearInterval(sender.timer);
-            sender.timer = setInterval(sender.tick, 1000 / sender.fps);
-        }
+        clearInterval(sender.timer);
+        sender.timer = setInterval(sender.tick, 1000/sender.fps);
     },
 
     stop: () => {
-        sender.isSending = false;
         clearInterval(sender.timer);
+        sender.timer = null;
+        document.getElementById('matrix-container').classList.add('opacity-30', 'blur-[2px]');
+        document.getElementById('send-overlay').classList.remove('hidden');
+        document.getElementById('send-controls').classList.add('hidden');
     },
 
     tick: () => {
-        // Update all 4 QRs
+        const total = sender.chunks.length;
+        // 更新4个二维码
         for(let i=0; i<4; i++) {
             sender.packetCount++;
-            const seed = Math.floor(Math.random() * 2000000);
+            const seed = Math.floor(Math.random()*1000000);
             
-            // LT Code Logic: Determine degree and neighbors
-            const total = sender.chunks.length;
+            // LT Code: 随机选块异或
             const rand = Utils.PRNG(seed);
             let degree = 1;
             const r = rand();
-            // Soliton distribution simplified
-            if (r < 0.5) degree = 1;
-            else if (r < 0.8) degree = 2;
-            else degree = Math.min(total, Math.ceil(rand() * 5) + 2);
+            if(r < 0.5) degree=1;
+            else if(r < 0.8) degree=2;
+            else degree = Math.min(total, Math.ceil(rand()*5)+2);
 
             const indices = [];
             while(indices.length < degree) {
-                const idx = Math.floor(rand() * total);
+                const idx = Math.floor(rand()*total);
                 if(!indices.includes(idx)) indices.push(idx);
             }
 
-            // XOR
-            const dataLen = parseInt(sender.chunkSize);
-            const xored = new Uint8Array(dataLen);
-            indices.forEach((idx, n) => {
+            const xored = new Uint8Array(parseInt(sender.chunkSize));
+            indices.forEach(idx => {
                 const blk = sender.chunks[idx];
-                for(let b=0; b<dataLen; b++) xored[b] ^= blk[b];
+                for(let b=0; b<xored.length; b++) xored[b] ^= blk[b];
             });
 
-            // Convert to Base64
-            let binary = '';
-            const len = xored.byteLength;
-            for (let b = 0; b < len; b++) binary += String.fromCharCode(xored[b]);
-            const b64 = btoa(binary);
-
-            // Protocol: TID | Seed | TotalChunks | Data | Meta(Name:Size)
-            // Including meta in every packet is overhead but ensures instant UX.
-            // To save space, we put Name:Size at the end.
-            const meta = `${sender.fileName}:${sender.fileSize}`;
-            const payload = `${sender.tid}|${seed}|${total}|${b64}|${meta}`;
+            // Protocol: TID|Seed|Total|B64|Meta(Name:Size)
+            let b64 = "";
+            for(let b=0; b<xored.length; b++) b64 += String.fromCharCode(xored[b]);
+            b64 = btoa(b64);
             
-            sender.qrs[i].value = payload;
+            const meta = `${sender.meta.name}:${sender.meta.size}`;
+            sender.qrs[i].value = `${sender.tid}|${seed}|${total}|${b64}|${meta}`;
         }
-        document.getElementById('pkg-count').innerText = sender.packetCount;
+        document.getElementById('pkg-counter').innerText = sender.packetCount;
     }
 };
 
-// ================= RECEIVER ENGINE =================
+// ================= 接收端逻辑 =================
 const receiver = {
-    video: document.getElementById('cam-video'),
-    canvas: document.getElementById('cam-canvas'),
+    video: document.getElementById('rx-video'),
+    canvas: document.getElementById('rx-canvas'),
     ctx: null,
     stream: null,
     scanning: false,
     
-    // Data State
+    // 状态
     tid: null,
+    startTime: 0,
     totalBlocks: 0,
+    fileName: "",
     fileSize: 0,
-    fileName: '',
     collected: new Set(),
     solved: {},
     queue: [],
@@ -412,58 +382,75 @@ const receiver = {
         receiver.ctx = receiver.canvas.getContext('2d', { willReadFrequently: true });
     },
 
-    start: async () => {
+    setSource: async (type) => {
+        receiver.stop();
+        receiver.init();
         try {
-            receiver.init();
-            receiver.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            if(type === 'screen') {
+                // 桌面分享
+                receiver.stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            } else {
+                // 摄像头 (user/environment)
+                receiver.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type } });
+            }
             receiver.video.srcObject = receiver.stream;
-            document.getElementById('cam-overlay').classList.add('hidden');
-            receiver.scanning = true;
-            requestAnimationFrame(receiver.loop);
-        } catch (e) {
-            alert('无法访问摄像头，请确保授权。');
+            receiver.startScan();
+        } catch(e) {
+            console.error(e);
+            alert("无法开启视频源：" + e.message);
         }
+    },
+
+    startScan: () => {
+        document.getElementById('rx-overlay').classList.add('hidden');
+        receiver.scanning = true;
+        requestAnimationFrame(receiver.loop);
     },
 
     stop: () => {
         receiver.scanning = false;
-        if (receiver.stream) receiver.stream.getTracks().forEach(t => t.stop());
-        document.getElementById('cam-overlay').classList.remove('hidden');
+        if(receiver.stream) receiver.stream.getTracks().forEach(t => t.stop());
+        receiver.stream = null;
+        document.getElementById('rx-overlay').classList.remove('hidden');
+    },
+
+    reset: () => {
+        receiver.stop();
+        receiver.tid = null;
+        receiver.collected.clear();
+        receiver.solved = {};
+        receiver.queue = [];
+        document.getElementById('rx-status-card').classList.add('hidden');
+        document.getElementById('rx-complete-view').classList.add('hidden');
+        document.getElementById('rx-progress-view').classList.remove('hidden');
     },
 
     loop: () => {
-        if (!receiver.scanning) return;
-        
-        if (receiver.video.readyState === receiver.video.HAVE_ENOUGH_DATA) {
-            const W = receiver.video.videoWidth;
-            const H = receiver.video.videoHeight;
-            receiver.canvas.width = W;
-            receiver.canvas.height = H;
-            receiver.ctx.drawImage(receiver.video, 0, 0, W, H);
-            
-            // Define 5 regions: Full, TL, TR, BL, BR
-            const midX = W/2, midY = H/2;
+        if(!receiver.scanning) return;
+        if(receiver.video.readyState === receiver.video.HAVE_ENOUGH_DATA) {
+            const w = receiver.video.videoWidth;
+            const h = receiver.video.videoHeight;
+            receiver.canvas.width = w;
+            receiver.canvas.height = h;
+            receiver.ctx.drawImage(receiver.video, 0, 0, w, h);
+
+            // 5区切割扫描 (全屏 + 4象限)
+            const midX = w/2, midY = h/2;
             const regions = [
-                { id: 'full', x: 0, y: 0, w: W, h: H },
-                { id: 'q-tl', x: 0, y: 0, w: midX, h: midY },
-                { id: 'q-tr', x: midX, y: 0, w: midX, h: midY },
-                { id: 'q-bl', x: 0, y: midY, w: midX, h: midY },
-                { id: 'q-br', x: midX, y: midY, w: midX, h: midY }
+                {id:'full', x:0, y:0, w:w, h:h},
+                {id:'q-tl', x:0, y:0, w:midX, h:midY},
+                {id:'q-tr', x:midX, y:0, w:midX, h:midY},
+                {id:'q-bl', x:0, y:midY, w:midX, h:midY},
+                {id:'q-br', x:midX, y:midY, w:midX, h:midY},
             ];
 
-            // Reset visual feedback
-            document.querySelectorAll('.scan-quadrant').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.scan-quadrant').forEach(e => e.classList.remove('active'));
 
             regions.forEach(r => {
-                const imgData = receiver.ctx.getImageData(r.x, r.y, r.w, r.h);
-                // jsQR scan
-                const code = jsQR(imgData.data, r.w, r.h, { inversionAttempts: "dontInvert" });
-                
-                if (code) {
-                    // Visual feedback
-                    if (r.id !== 'full') {
-                        document.getElementById(r.id).classList.add('active');
-                    }
+                const idata = receiver.ctx.getImageData(r.x, r.y, r.w, r.h);
+                const code = jsQR(idata.data, r.w, r.h, { inversionAttempts: "dontInvert" });
+                if(code) {
+                    if(r.id !== 'full') document.getElementById(r.id).classList.add('active');
                     receiver.parse(code.data);
                 }
             });
@@ -472,121 +459,127 @@ const receiver = {
     },
 
     parse: (str) => {
-        // Protocol: TID | Seed | Total | B64 | Meta
         const p = str.split('|');
-        if (p.length < 5) return;
+        if(p.length < 5) return;
+        const [tid, seedStr, totalStr, b64, meta] = p;
+        const seed = parseInt(seedStr);
+        const total = parseInt(totalStr);
 
-        const tid = p[0];
-        const seed = parseInt(p[1]);
-        const total = parseInt(p[2]);
-        const b64 = p[3];
-        const meta = p.slice(4).join('|'); // Join back in case filename has |
-
-        // Reset if new file
-        if (receiver.tid !== tid) {
+        // 新任务检测
+        if(receiver.tid !== tid) {
             receiver.tid = tid;
             receiver.totalBlocks = total;
+            receiver.startTime = Date.now();
             const [fname, fsize] = meta.split(':');
             receiver.fileName = fname;
             receiver.fileSize = parseInt(fsize);
             
-            // Reset logic
             receiver.collected.clear();
             receiver.solved = {};
             receiver.queue = [];
             
-            // UI Update
-            document.getElementById('recv-idle').classList.add('hidden');
-            document.getElementById('recv-active').classList.remove('hidden');
-            document.getElementById('recv-name').innerText = fname;
-            document.getElementById('recv-size').innerText = Utils.formatSize(receiver.fileSize);
-            document.getElementById('recv-success').classList.add('hidden');
+            // UI初始化
+            document.getElementById('rx-status-card').classList.remove('hidden');
+            document.getElementById('rx-complete-view').classList.add('hidden');
+            document.getElementById('rx-progress-view').classList.remove('hidden');
+            document.getElementById('rx-filename').innerText = fname;
+            document.getElementById('rx-filesize').innerText = Utils.formatSize(receiver.fileSize);
         }
 
-        if (receiver.collected.has(seed)) return;
+        if(receiver.collected.has(seed)) return;
         receiver.collected.add(seed);
 
-        // UI progress update
-        document.getElementById('collected-count').innerText = receiver.collected.size;
-        
-        // Decode
+        // 解码数据
         const bin = atob(b64);
         const data = new Uint8Array(bin.length);
         for(let i=0; i<bin.length; i++) data[i] = bin.charCodeAt(i);
 
-        // Reconstruct indices
+        // 还原Indices
         const rand = Utils.PRNG(seed);
         let degree = 1;
         const r = rand();
-        if (r < 0.5) degree = 1;
-        else if (r < 0.8) degree = 2;
-        else degree = Math.min(total, Math.ceil(rand() * 5) + 2);
+        if(r < 0.5) degree = 1;
+        else if(r < 0.8) degree = 2;
+        else degree = Math.min(total, Math.ceil(rand()*5)+2);
 
         const indices = [];
         while(indices.length < degree) {
-            const idx = Math.floor(rand() * total);
+            const idx = Math.floor(rand()*total);
             if(!indices.includes(idx)) indices.push(idx);
         }
 
         receiver.queue.push({ indices, data });
-        receiver.solve();
+        receiver.processQueue();
+        receiver.updateStats();
     },
 
-    solve: () => {
+    processQueue: () => {
         let progress = true;
         while(progress) {
             progress = false;
-            // Remove solved blocks from queue items
             receiver.queue.forEach(item => {
                 const needed = item.indices.filter(idx => !receiver.solved[idx]);
-                if (needed.length < item.indices.length) {
-                    // XOR out known blocks
-                    item.indices.forEach(idx => {
-                        if (receiver.solved[idx]) {
-                            const known = receiver.solved[idx];
-                            for(let i=0; i<item.data.length; i++) item.data[i] ^= known[i];
-                        }
+                // 如果所需块减少了(被其他包解出来了)
+                if(needed.length < item.indices.length) {
+                    const known = item.indices.filter(idx => receiver.solved[idx]);
+                    known.forEach(idx => {
+                        const val = receiver.solved[idx];
+                        for(let i=0; i<item.data.length; i++) item.data[i] ^= val[i];
                     });
                     item.indices = needed;
-                    progress = true; // Changes happened
+                    progress = true;
                 }
             });
 
-            // Find degree-1 blocks
-            const solvable = receiver.queue.find(item => item.indices.length === 1);
-            if (solvable) {
+            // 寻找度为1的包
+            const solvable = receiver.queue.find(i => i.indices.length === 1);
+            if(solvable) {
                 const idx = solvable.indices[0];
-                if (!receiver.solved[idx]) {
+                if(!receiver.solved[idx]) {
                     receiver.solved[idx] = solvable.data;
                     progress = true;
-                    receiver.updateProgress();
                 }
-                // Cleanup
                 receiver.queue = receiver.queue.filter(i => i.indices.length > 0);
             }
         }
     },
 
-    updateProgress: () => {
-        const done = Object.keys(receiver.solved).length;
-        const pct = Math.floor((done / receiver.totalBlocks) * 100);
-        document.getElementById('progress-bar').style.width = pct + '%';
-        document.getElementById('progress-text').innerText = pct + '%';
+    updateStats: () => {
+        const solvedCount = Object.keys(receiver.solved).length;
+        const pct = Math.floor((solvedCount / receiver.totalBlocks) * 100);
+        
+        // 进度条
+        document.getElementById('rx-bar').style.width = pct + '%';
+        document.getElementById('rx-pct').innerText = pct;
 
-        if (done >= receiver.totalBlocks) {
-            receiver.finish();
+        // ETA 计算
+        const now = Date.now();
+        const elapsed = (now - receiver.startTime) / 1000; // sec
+        if(elapsed > 1 && solvedCount > 0) {
+            const speed = solvedCount / elapsed; // blocks per sec
+            const remaining = receiver.totalBlocks - solvedCount;
+            const eta = remaining / speed;
+            document.getElementById('rx-eta').innerText = Utils.formatTime(eta);
+        }
+
+        if(solvedCount >= receiver.totalBlocks) {
+            receiver.finish(elapsed);
         }
     },
 
-    finish: () => {
-        receiver.scanning = false;
-        document.getElementById('recv-success').classList.remove('hidden');
+    finish: (elapsed) => {
+        receiver.scanning = false; // 停止扫描
+        document.getElementById('rx-progress-view').classList.add('hidden');
+        document.getElementById('rx-complete-view').classList.remove('hidden');
         
-        // Reassemble
+        // 统计
+        document.getElementById('rx-stat-time').innerText = elapsed.toFixed(1) + 's';
+        document.getElementById('rx-stat-pkgs').innerText = receiver.collected.size;
+
+        // 组装文件
         const chunks = [];
         for(let i=0; i<receiver.totalBlocks; i++) chunks.push(receiver.solved[i]);
         
-        // Merge
         const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
         const fileData = new Uint8Array(totalLen);
         let offset = 0;
@@ -595,11 +588,10 @@ const receiver = {
             offset += c.length;
         });
 
-        // Slice to exact size (remove padding)
         const finalData = fileData.slice(0, receiver.fileSize);
         const blob = new Blob([finalData]);
         
-        document.getElementById('dl-btn').onclick = () => {
+        document.getElementById('btn-download').onclick = () => {
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = receiver.fileName;
@@ -608,7 +600,6 @@ const receiver = {
     }
 };
 
-// Start
 sender.init();
 </script>
 </body>
