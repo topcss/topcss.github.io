@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN" style="background:#0b1020;">
 
@@ -98,6 +99,38 @@
             z-index: 15;
         }
 
+        .save-status {
+            padding: 6px 10px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+            font-family: monospace;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            position: fixed;
+            bottom: 12px;
+            left: 12px;
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .save-status .lucide-icon {
+            width: 14px;
+            height: 14px;
+            animation: spin 1s linear infinite;
+            opacity: 0.9;
+            filter: invert(1) hue-rotate(0deg);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         .menu-btn {
             appearance: none;
             border: 1px solid rgba(255, 255, 255, 0.14);
@@ -105,8 +138,12 @@
             color: rgba(235, 240, 255, 0.92);
             font-family: inherit;
             font-size: 12px;
-            font-weight: 600;
             padding: 6px 10px;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transform: translateZ(0);
+            backface-visibility: hidden;
             border-radius: 10px;
             cursor: pointer;
             transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
@@ -187,6 +224,11 @@
             border-radius: 10px;
             cursor: pointer;
             text-align: left;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transform: translateZ(0);
+            backface-visibility: hidden;
             transition: background 0.15s, color 0.15s, transform 0.15s;
             white-space: nowrap;
             display: flex;
@@ -432,14 +474,72 @@
             display: none !important;
         }
 
-        #help-modal.hidden, #export-modal.hidden, #import-modal.hidden, #about-modal.hidden {
+        #help-modal.hidden, #api-help-modal.hidden, #export-modal.hidden, #import-modal.hidden, #about-modal.hidden {
             display: none;
         }
 
-        #help-modal, #export-modal, #import-modal, #about-modal {
+        #help-modal, #api-help-modal, #export-modal, #import-modal, #about-modal {
             position: fixed;
             inset: 0;
             z-index: 10000;
+        }
+
+        #help-modal ::-webkit-scrollbar,
+        #api-help-modal ::-webkit-scrollbar,
+        #export-modal ::-webkit-scrollbar,
+        #import-modal ::-webkit-scrollbar,
+        #about-modal ::-webkit-scrollbar,
+        textarea::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        #help-modal ::-webkit-scrollbar-track,
+        #api-help-modal ::-webkit-scrollbar-track,
+        #export-modal ::-webkit-scrollbar-track,
+        #import-modal ::-webkit-scrollbar-track,
+        #about-modal ::-webkit-scrollbar-track,
+        textarea::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 3px;
+        }
+
+        #help-modal ::-webkit-scrollbar-thumb,
+        #api-help-modal ::-webkit-scrollbar-thumb,
+        #export-modal ::-webkit-scrollbar-thumb,
+        #import-modal ::-webkit-scrollbar-thumb,
+        #about-modal ::-webkit-scrollbar-thumb,
+        textarea::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 3px;
+        }
+
+        #help-modal ::-webkit-scrollbar-thumb:hover,
+        #api-help-modal ::-webkit-scrollbar-thumb:hover,
+        #export-modal ::-webkit-scrollbar-thumb:hover,
+        #import-modal ::-webkit-scrollbar-thumb:hover,
+        #about-modal ::-webkit-scrollbar-thumb:hover,
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        #help-modal ::-webkit-scrollbar-corner,
+        #api-help-modal ::-webkit-scrollbar-corner,
+        #export-modal ::-webkit-scrollbar-corner,
+        #import-modal ::-webkit-scrollbar-corner,
+        #about-modal ::-webkit-scrollbar-corner,
+        textarea::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        #help-modal,
+        #api-help-modal,
+        #export-modal,
+        #import-modal,
+        #about-modal,
+        textarea {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.06);
         }
 
         #export-modal .modal-backdrop {
@@ -600,21 +700,22 @@
             line-height: 1.6;
         }
 
-        #help-modal .modal-backdrop {
+        #help-modal .modal-backdrop, #api-help-modal .modal-backdrop {
             position: absolute;
             inset: 0;
             background: rgba(0, 0, 0, 0.55);
             backdrop-filter: blur(4px);
         }
 
-        #help-modal .modal-card {
+        #help-modal .modal-card, #api-help-modal .modal-card {
             position: absolute;
             top: 70px;
             left: 50%;
             transform: translateX(-50%);
             width: min(760px, calc(100vw - 24px));
             max-height: calc(100vh - 110px);
-            overflow: auto;
+            display: flex;
+            flex-direction: column;
             border-radius: 12px;
             background: rgba(0, 0, 0, 0.82);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -622,7 +723,7 @@
             color: rgba(255, 255, 255, 0.92);
         }
 
-        #help-modal .modal-header {
+        #help-modal .modal-header, #api-help-modal .modal-header {
             position: sticky;
             top: 0;
             display: flex;
@@ -635,14 +736,14 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
-        #help-modal .modal-title {
+        #help-modal .modal-title, #api-help-modal .modal-title {
             font-family: monospace;
             font-size: 13px;
             color: #00ff88;
             font-weight: 700;
         }
 
-        #help-modal .modal-close {
+        #help-modal .modal-close, #api-help-modal .modal-close {
             appearance: none;
             border: 1px solid rgba(255, 255, 255, 0.18);
             background: rgba(255, 255, 255, 0.08);
@@ -660,7 +761,7 @@
             cursor: pointer;
         }
 
-        #help-modal .modal-close .lucide-icon {
+        #help-modal .modal-close .lucide-icon, #api-help-modal .modal-close .lucide-icon {
             width: 16px;
             height: 16px;
             display: block;
@@ -672,20 +773,22 @@
             opacity: 1;
         }
 
-        #help-modal .modal-body {
+        #help-modal .modal-body, #api-help-modal .modal-body {
             padding: 14px;
             font-family: monospace;
             font-size: 12px;
             line-height: 1.6;
+            overflow-y: auto;
+            flex: 1;
         }
 
-        #help-modal .help-section-title {
+        #help-modal .help-section-title, #api-help-modal .help-section-title {
             margin: 10px 0 6px;
             color: rgba(255, 255, 255, 0.85);
             font-weight: 700;
         }
 
-        #help-modal .help-list {
+        #help-modal .help-list, #api-help-modal .help-list {
             margin: 0;
             padding-left: 18px;
             color: rgba(255, 255, 255, 0.78);
@@ -830,98 +933,53 @@
             position: fixed;
             bottom: 20px;
             right: 212px;
-            width: 180px;
             background: rgba(14, 17, 24, 0.55);
             backdrop-filter: blur(10px);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
-            padding: 10px 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+            padding: 4px;
             z-index: 10;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            align-items: center;
+            gap: 4px;
         }
 
-        #zoom-control .zoom-label {
-            display: none;
-        }
-
-        #zoom-control .zoom-slider-container {
-            position: relative;
-            height: 20px;
+        #zoom-control .zoom-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
 
-        #zoom-control .zoom-slider {
-            width: 100%;
-            height: 6px;
-            -webkit-appearance: none;
-            appearance: none;
-            background: rgba(255, 255, 255, 0.16);
-            border-radius: 3px;
-            outline: none;
-            cursor: pointer;
+        #zoom-control .zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
         }
 
-        #zoom-control .zoom-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
+        #zoom-control .zoom-btn:active {
+            transform: scale(0.95);
+        }
+
+        #zoom-control .zoom-btn .lucide-icon {
             width: 14px;
             height: 14px;
-            background: #00ff88;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
-        }
-
-        #zoom-control .zoom-slider::-moz-range-thumb {
-            width: 14px;
-            height: 14px;
-            background: #00ff88;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+            opacity: 0.9;
+            filter: invert(92%);
         }
 
         #zoom-control .zoom-value {
             font-size: 11px;
             color: #00ff88;
             font-family: monospace;
-            text-align: center;
             font-weight: bold;
-        }
-
-        #zoom-control .zoom-reset-btn {
-            background: rgba(0, 255, 136, 0.2);
-            border: 1px solid rgba(0, 255, 136, 0.5);
-            color: #00ff88;
-            font-size: 10px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            cursor: pointer;
+            min-width: 40px;
             text-align: center;
-            font-family: monospace;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        #zoom-control .zoom-reset-btn .lucide-icon {
-            width: 12px;
-            height: 12px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        #zoom-control .zoom-reset-btn:hover {
-            background: rgba(0, 255, 136, 0.3);
-            border-color: rgba(0, 255, 136, 0.8);
         }
     </style>
 </head>
@@ -976,6 +1034,11 @@
                 <div class="menu-divider"></div>
                 <button class="menu-item" id="collapse-all-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/shrink.svg" /><span>折叠所有</span></button>
                 <button class="menu-item" id="expand-all-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/expand.svg" /><span>展开所有</span></button>
+                <button class="menu-item" id="expand-level-1"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/layers.svg" /><span>展开到第1级</span></button>
+                <button class="menu-item" id="expand-level-2"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/layers.svg" /><span>展开到第2级</span></button>
+                <button class="menu-item" id="expand-level-3"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/layers.svg" /><span>展开到第3级</span></button>
+                <button class="menu-item" id="expand-level-4"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/layers.svg" /><span>展开到第4级</span></button>
+                <button class="menu-item" id="expand-level-5"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/layers.svg" /><span>展开到第5级</span></button>
                 <div class="menu-divider"></div>
                 <button class="menu-item" id="toggle-zoom-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/zoom-in.svg" /><span>缩放控制</span></button>
                 <button class="menu-item" id="toggle-minimap-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/map.svg" /><span>缩略图</span></button>
@@ -1002,25 +1065,31 @@
             </button>
             <div class="menu-dropdown" id="help-menu">
                 <button class="menu-item" id="help-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/book-open.svg" /><span>操作说明</span></button>
+                <button class="menu-item" id="api-help-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/code.svg" /><span>接口说明</span></button>
                 <div class="menu-divider"></div>
-                <button class="menu-item" id="about-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/badge-info.svg" /><span>软件信息</span></button>
+                <button class="menu-item" id="about-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/badge-info.svg" /><span>关于</span></button>
             </div>
         </div>
     </div>
-    <div id="stats" class="topbar-stats">初始化中...</div>
+    <div id="stats" class="topbar-stats panel-hidden">初始化中...</div>
+    <div id="save-status" class="save-status panel-hidden">
+        <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/spinner.svg" />
+        <span>正在保存...</span>
+    </div>
     <div id="minimap" class="panel-hidden">
         <span class="minimap-label">缩略图</span>
         <div class="viewport-rect"></div>
     </div>
     <div id="zoom-control" class="panel-hidden">
-        <span class="zoom-label">缩放控制</span>
-        <div class="zoom-slider-container">
-            <input type="range" class="zoom-slider" min="10" max="400" value="100">
-        </div>
+        <button class="zoom-btn zoom-out-btn" type="button" title="缩小">
+            <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/minus.svg" />
+        </button>
         <span class="zoom-value">100%</span>
-        <button class="zoom-reset-btn" type="button">
+        <button class="zoom-btn zoom-in-btn" type="button" title="放大">
+            <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/plus.svg" />
+        </button>
+        <button class="zoom-btn zoom-reset-btn" type="button" title="重置">
             <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/rotate-ccw.svg" />
-            <span>100%</span>
         </button>
     </div>
     <div id="search-panel" class="panel-hidden" role="dialog" aria-label="搜索替换">
@@ -1061,7 +1130,7 @@
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
-                <div class="modal-title">思维导图操作帮助</div>
+                <div class="modal-title">操作说明</div>
                 <button id="help-close" class="modal-close" type="button" aria-label="关闭" title="关闭">
                     <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/x.svg" />
                 </button>
@@ -1074,7 +1143,9 @@
                     <li>左键在空白处拖拽：矩形框选多个节点（框选过程中靠近窗口边缘会自动滚动画布）</li>
                     <li>拖拽选中的节点：将选中的一个或多个节点移动到目标节点下（支持拖入子节点或插入到同级位置）</li>
                     <li>右键拖拽：平移视口（拖拽中可移出画布继续）</li>
-                    <li>滚轮：缩放视口（也可使用右侧缩放控制条）</li>
+                    <li>滚轮：上下滚动画布</li>
+                    <li>Alt+滚轮：左右滚动画布</li>
+                    <li>Ctrl+滚轮：缩放视口</li>
                     <li>小地图：点击跳转到对应区域；在视口框内按住拖动可平移</li>
                 </ul>
                 <div class="help-section-title">键盘</div>
@@ -1096,6 +1167,76 @@
         </div>
     </div>
 
+    <div id="api-help-modal" class="hidden" role="dialog" aria-modal="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">API 接口说明</div>
+                <button id="api-help-close" class="modal-close" type="button" aria-label="关闭" title="关闭">
+                    <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/x.svg" />
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section-title">使用方式</div>
+                <ul class="help-list">
+                    <li>在浏览器控制台中使用 <code>window.MindMap</code> 或直接 <code>MindMap</code> 访问接口</li>
+                </ul>
+                <div class="help-section-title">节点选择</div>
+                <ul class="help-list">
+                    <li><code>MindMap.getSelectedNode()</code> - 获取当前选中的节点对象</li>
+                    <li><code>MindMap.getSelectedNodeId()</code> - 获取当前选中节点的 ID</li>
+                    <li><code>MindMap.selectNodeById(nodeId)</code> - 根据 ID 选中节点</li>
+                    <li><code>MindMap.selectNodeByName(name, exact=false)</code> - 根据名称选中节点</li>
+                </ul>
+                <div class="help-section-title">节点修改</div>
+                <ul class="help-list">
+                    <li><code>MindMap.setNodeName(nodeId, newName)</code> - 修改指定节点的名称</li>
+                    <li><code>MindMap.setSelectedNodeName(newName)</code> - 修改当前选中节点的名称</li>
+                </ul>
+                <div class="help-section-title">节点添加</div>
+                <ul class="help-list">
+                    <li><code>MindMap.addChild(parentId, name)</code> - 向指定父节点添加子节点</li>
+                    <li><code>MindMap.addChildToSelected(name)</code> - 向当前选中节点添加子节点</li>
+                    <li><code>MindMap.addChildren(parentId, names)</code> - 批量添加多个子节点</li>
+                </ul>
+                <div class="help-section-title">节点删除</div>
+                <ul class="help-list">
+                    <li><code>MindMap.deleteNode(nodeId)</code> - 删除指定节点（及其子树）</li>
+                    <li><code>MindMap.deleteSelectedNode()</code> - 删除当前选中的节点</li>
+                </ul>
+                <div class="help-section-title">节点查找</div>
+                <ul class="help-list">
+                    <li><code>MindMap.findNodesByName(name, exact=false)</code> - 根据名称查找节点</li>
+                    <li><code>MindMap.findNodeById(nodeId)</code> - 根据 ID 查找节点</li>
+                    <li><code>MindMap.getAllNodes()</code> - 获取所有节点列表</li>
+                    <li><code>MindMap.getNodeCount()</code> - 获取节点总数</li>
+                </ul>
+                <div class="help-section-title">折叠/展开</div>
+                <ul class="help-list">
+                    <li><code>MindMap.collapseNode(nodeId)</code> - 折叠指定节点</li>
+                    <li><code>MindMap.expandNode(nodeId)</code> - 展开指定节点</li>
+                    <li><code>MindMap.expandAll()</code> - 展开所有节点</li>
+                    <li><code>MindMap.collapseAll()</code> - 折叠所有节点</li>
+                </ul>
+                <div class="help-section-title">视图控制</div>
+                <ul class="help-list">
+                    <li><code>MindMap.zoomTo(scale)</code> - 缩放到指定比例 (0.1-4.0)</li>
+                    <li><code>MindMap.zoomIn()</code> - 放大 10%</li>
+                    <li><code>MindMap.zoomOut()</code> - 缩小 10%</li>
+                    <li><code>MindMap.resetView()</code> - 重置视图到原始状态</li>
+                </ul>
+                <div class="help-section-title">使用示例</div>
+                <ul class="help-list">
+                    <li><code>MindMap.setSelectedNodeName('新名称')</code></li>
+                    <li><code>MindMap.addChildToSelected('子节点')</code></li>
+                    <li><code>MindMap.addChildren(0, ['A', 'B', 'C'])</code></li>
+                    <li><code>MindMap.selectNodeById(5)</code></li>
+                    <li><code>MindMap.deleteSelectedNode()</code></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
     <div id="about-modal" class="hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
@@ -1107,10 +1248,9 @@
             </div>
             <div class="modal-body">
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.1</span></div>
+                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.2</span></div>
                     <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div style="height:1px;background:rgba(255,255,255,0.10);margin:4px 0;"></div>
-                    <div style="color:rgba(255,255,255,0.72);font-weight:700;">介绍信息</div>
                     <div style="color:rgba(255,255,255,0.84);">
                         <p style="margin:0 0 10px;">
                             十年前，我基于百度脑图开发了桌面端脑图工具 <a href="https://github.com/NaoTu/DesktopNaotu" target="_blank" rel="noopener noreferrer">DesktopNaotu</a>，并开源发布，为社区贡献了一份绵薄之力。
@@ -1392,11 +1532,10 @@
 
             function canDrag(dx, dy) {
                 const scale = container.scale.x;
-                const pad = 400;
-                const bMinX = (typeof minX === 'number' && Number.isFinite(minX)) ? (minX - pad) : -Infinity;
-                const bMaxX = (typeof maxX === 'number' && Number.isFinite(maxX)) ? (maxX + pad) : Infinity;
-                const bMinY = (typeof minY === 'number' && Number.isFinite(minY)) ? (minY - pad) : -Infinity;
-                const bMaxY = (typeof maxY === 'number' && Number.isFinite(maxY)) ? (maxY + pad) : Infinity;
+                const bMinX = (typeof minX === 'number' && Number.isFinite(minX)) ? minX : -Infinity;
+                const bMaxX = (typeof maxX === 'number' && Number.isFinite(maxX)) ? maxX : Infinity;
+                const bMinY = (typeof minY === 'number' && Number.isFinite(minY)) ? minY : -Infinity;
+                const bMaxY = (typeof maxY === 'number' && Number.isFinite(maxY)) ? maxY : Infinity;
                 
                 const newContainerX = container.x + dx;
                 const newContainerY = container.y + dy;
@@ -1407,6 +1546,37 @@
                 const viewBottom = (-newContainerY + app.screen.height) / scale;
                 
                 return !(bMaxX < viewLeft || bMinX > viewRight || bMaxY < viewTop || bMinY > viewBottom);
+            }
+
+            function clampContainerPosition() {
+                const scale = container.scale.x;
+                const bMinX = (typeof minX === 'number' && Number.isFinite(minX)) ? minX : -Infinity;
+                const bMaxX = (typeof maxX === 'number' && Number.isFinite(maxX)) ? maxX : Infinity;
+                const bMinY = (typeof minY === 'number' && Number.isFinite(minY)) ? minY : -Infinity;
+                const bMaxY = (typeof maxY === 'number' && Number.isFinite(maxY)) ? maxY : Infinity;
+                
+                const viewLeft = -container.x / scale;
+                const viewRight = (-container.x + app.screen.width) / scale;
+                const viewTop = -container.y / scale;
+                const viewBottom = (-container.y + app.screen.height) / scale;
+                
+                let newX = container.x;
+                let newY = container.y;
+                
+                if (bMaxX < viewLeft) {
+                    newX = -bMaxX * scale + app.screen.width;
+                } else if (bMinX > viewRight) {
+                    newX = -bMinX * scale;
+                }
+                
+                if (bMaxY < viewTop) {
+                    newY = -bMaxY * scale + app.screen.height;
+                } else if (bMinY > viewBottom) {
+                    newY = -bMinY * scale;
+                }
+                
+                container.x = newX;
+                container.y = newY;
             }
 
             app.view.addEventListener('mousedown', (e) => {
@@ -2258,8 +2428,8 @@
 
                     const style = containerItem._nodeData.style;
                     const measured = measureNodeText(style, newName, 520);
-                    const newWidth = Math.max(baseWidth ?? 0, measured.width);
-                    const newHeight = Math.max(baseHeight ?? 0, measured.height);
+                    const newWidth = measured.width;
+                    const newHeight = measured.height;
                     const textWidth = measured.textWidth;
                     const textHeight = measured.textHeight;
 
@@ -2506,8 +2676,11 @@
                                 }
 
                                 if (scrollX !== 0 || scrollY !== 0) {
-                                    container.x += scrollX;
-                                    container.y += scrollY;
+                                    if (canDrag(scrollX, scrollY)) {
+                                        container.x += scrollX;
+                                        container.y += scrollY;
+                                    }
+                                    clampContainerPosition();
                                 }
                             }
                         };
@@ -2690,6 +2863,10 @@
                 undoStack.push(cmd);
                 redoStack.length = 0;
                 updateUndoRedoButtons();
+                if (currentFileHandle && cmd.type !== 'collapse') {
+                    isModified = true;
+                    updateTitle();
+                }
             }
 
             function undo() {
@@ -2799,6 +2976,12 @@
                         span.remove();
                         domNodeById.delete(id);
                     }
+                    const badge = collapseBadgeById.get(id);
+                    if (badge) {
+                        container.removeChild(badge);
+                        badge.destroy({ children: true });
+                        collapseBadgeById.delete(id);
+                    }
                 }
                 for (let i = domNodes.length - 1; i >= 0; i--) {
                     const id = parseInt(domNodes[i].dataset.nodeId);
@@ -2824,6 +3007,20 @@
                 if (editingInput && editingInput.node && deleteSet.has(editingInput.node.id)) {
                     cancelNodeEdit();
                 }
+
+                if (currentSelectedNode && deleteSet.has(currentSelectedNode._nodeData.nodeId)) {
+                    currentSelectedNode = null;
+                    selectedNodes.clear();
+                    selectedNodeIds.clear();
+                    minimapDirty = true;
+                    refreshTopbarStats();
+                }
+
+                selectedNodes.forEach(node => {
+                    if (deleteSet.has(node._nodeData.nodeId)) {
+                        selectedNodes.delete(node);
+                    }
+                });
 
                 for (const id of deleteSet) {
                     const node = nodeById.get(id);
@@ -3501,6 +3698,12 @@
             document.addEventListener('keydown', (e) => {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+                if (e.ctrlKey && (e.key === 's' || e.key === 'S')) {
+                    e.preventDefault();
+                    saveMtFile();
+                    return;
+                }
+
                 if (e.ctrlKey && (e.key === 'f' || e.key === 'F')) {
                     e.preventDefault();
                     openSearchPanel();
@@ -3855,7 +4058,6 @@
             });
 
             const zoomControl = document.getElementById('zoom-control');
-            const zoomSlider = zoomControl.querySelector('.zoom-slider');
             const zoomValue = zoomControl.querySelector('.zoom-value');
 
             function updateZoom(newScale, mouseX, mouseY) {
@@ -3879,23 +4081,47 @@
                     container.y = -worldY * newScale + centerY;
                 }
 
-                zoomSlider.value = Math.round(newScale * 100);
+                clampContainerPosition();
+
                 zoomValue.textContent = `${Math.round(newScale * 100)}%`;
             }
 
-            zoomSlider.addEventListener('input', () => {
-                const percent = parseInt(zoomSlider.value);
-                const newScale = percent / 100;
-                updateZoom(newScale);
+            const zoomInBtn = zoomControl.querySelector('.zoom-in-btn');
+            const zoomOutBtn = zoomControl.querySelector('.zoom-out-btn');
+
+            zoomInBtn.addEventListener('click', () => {
+                const currentScale = container.scale.x;
+                updateZoom(currentScale * 1.1);
+            });
+
+            zoomOutBtn.addEventListener('click', () => {
+                const currentScale = container.scale.x;
+                updateZoom(currentScale * 0.9);
             });
 
             app.view.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 beginTransientDegrade(180);
-                const delta = e.deltaY > 0 ? 0.9 : 1.1;
-                const newScale = container.scale.x * delta;
-                const { x: mouseX, y: mouseY } = clientToCanvasPoint(e.clientX, e.clientY);
-                updateZoom(newScale, mouseX, mouseY);
+                
+                if (e.ctrlKey) {
+                    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                    const newScale = container.scale.x * delta;
+                    const { x: mouseX, y: mouseY } = clientToCanvasPoint(e.clientX, e.clientY);
+                    updateZoom(newScale, mouseX, mouseY);
+                    clampContainerPosition();
+                } else if (e.altKey) {
+                    const scrollSpeed = 4;
+                    if (canDrag(e.deltaY * scrollSpeed, 0)) {
+                        container.x += e.deltaY * scrollSpeed;
+                    }
+                    clampContainerPosition();
+                } else {
+                    const scrollSpeed = 4;
+                    if (canDrag(0, e.deltaY * scrollSpeed)) {
+                        container.y += e.deltaY * scrollSpeed;
+                    }
+                    clampContainerPosition();
+                }
             });
 
             const zoomResetBtn = zoomControl.querySelector('.zoom-reset-btn');
@@ -4307,8 +4533,7 @@
             container.x = screenCenterX - centerX;
             container.y = screenCenterY - centerY;
 
-            if (zoomSlider && zoomValue) {
-                zoomSlider.value = 100;
+            if (zoomValue) {
                 zoomValue.textContent = `100%`;
             }
             container.scale.set(1.0);
@@ -4364,16 +4589,12 @@
             const styles = {
                 root: { bgColor: 0x6c5ce7, textColor: '#ffffff', borderColor: 0xa29bfe, fontSize: 26, paddingX: 20, paddingY: 10, radius: 24, fontWeight: 'bold' },
                 level1: { bgColor: 0x4a4e69, textColor: '#f0f0f0', borderColor: 0x6c6f8d, fontSize: 18, paddingX: 18, paddingY: 9, radius: 20, fontWeight: 'normal' },
-                level2: { bgColor: 0x3b3f5c, textColor: '#e0e0e0', borderColor: 0x5c5f7a, fontSize: 16, paddingX: 14, paddingY: 7, radius: 18, fontWeight: 'normal' },
-                level3: { bgColor: 0x2d2f4a, textColor: '#d4d4d8', borderColor: 0x494b66, fontSize: 14, paddingX: 12, paddingY: 6, radius: 16, fontWeight: 'normal' },
-                default: { bgColor: 0x25273c, textColor: '#cbd5e6', borderColor: 0x3d415c, fontSize: 12, paddingX: 12, paddingY: 6, radius: 14, fontWeight: 'normal' }
+                default: { bgColor: 0x2d2f4a, textColor: '#d4d4d8', borderColor: 0x494b66, fontSize: 14, paddingX: 12, paddingY: 6, radius: 16, fontWeight: 'normal' }
             };
 
             function getStyleForLevel(level, isRoot = false) {
                 if (isRoot) return styles.root;
                 if (level === 1) return styles.level1;
-                if (level === 2) return styles.level2;
-                if (level === 3) return styles.level3;
                 return styles.default;
             }
 
@@ -4386,17 +4607,7 @@
 
             function countDescendants(node) {
                 if (!node || !node.children || node.children.length === 0) return 0;
-                let count = 0;
-                const stack = [...node.children];
-                while (stack.length) {
-                    const n = stack.pop();
-                    if (!n) continue;
-                    count++;
-                    if (n.children && n.children.length) {
-                        for (let i = n.children.length - 1; i >= 0; i--) stack.push(n.children[i]);
-                    }
-                }
-                return count;
+                return node.children.length;
             }
 
             function updateCollapseBadgeVisual(node, badge) {
@@ -4856,8 +5067,7 @@
             }
 
             redrawAllLines();
-            if (zoomSlider && zoomValue) {
-                zoomSlider.value = 100;
+            if (zoomValue) {
                 zoomValue.textContent = `100%`;
             }
             container.scale.set(1.0);
@@ -4886,6 +5096,19 @@
             const expandAllBtn = document.getElementById('expand-all-btn');
             const openMtBtn = document.getElementById('open-mt-btn');
             const saveMtBtn = document.getElementById('save-mt-btn');
+            const saveStatus = document.getElementById('save-status');
+
+            function showSaveStatus() {
+                if (saveStatus) {
+                    saveStatus.classList.remove('panel-hidden');
+                }
+            }
+
+            function hideSaveStatus() {
+                if (saveStatus) {
+                    saveStatus.classList.add('panel-hidden');
+                }
+            }
             const newNodeBtn = document.getElementById('new-node-btn');
             const copyNodeBtn = document.getElementById('copy-node-btn');
             const pasteNodeBtn = document.getElementById('paste-node-btn');
@@ -4906,6 +5129,23 @@
             const searchCloseBtn = document.getElementById('search-close-btn');
             
             let currentFileHandle = null;
+            let isModified = false;
+
+            function updateTitle() {
+                const baseTitle = '思维导图极速版';
+                let title = baseTitle;
+                if (currentFileHandle) {
+                    const fileName = currentFileHandle.name;
+                    const modifiedMark = isModified ? '*' : '';
+                    title = `${baseTitle} - ${modifiedMark}${fileName}`;
+                }
+                document.title = title;
+            }
+
+            function setModified(value) {
+                isModified = value;
+                updateTitle();
+            }
 
             function setupMenus() {
                 const menuContainers = document.querySelectorAll('.menu-container');
@@ -4977,6 +5217,31 @@
             }
             if (helpBackdrop) {
                 helpBackdrop.addEventListener('click', closeHelp);
+            }
+
+            const apiHelpBtn = document.getElementById('api-help-btn');
+            const apiHelpModal = document.getElementById('api-help-modal');
+            const apiHelpClose = document.getElementById('api-help-close');
+            const apiHelpBackdrop = apiHelpModal ? apiHelpModal.querySelector('.modal-backdrop') : null;
+
+            function openApiHelp() {
+                if (!apiHelpModal) return;
+                apiHelpModal.classList.remove('hidden');
+            }
+
+            function closeApiHelp() {
+                if (!apiHelpModal) return;
+                apiHelpModal.classList.add('hidden');
+            }
+
+            if (apiHelpBtn) {
+                apiHelpBtn.addEventListener('click', openApiHelp);
+            }
+            if (apiHelpClose) {
+                apiHelpClose.addEventListener('click', closeApiHelp);
+            }
+            if (apiHelpBackdrop) {
+                apiHelpBackdrop.addEventListener('click', closeApiHelp);
             }
 
             function openAbout() {
@@ -5088,6 +5353,19 @@
                 return s.toLowerCase().includes(String(query).toLowerCase());
             }
 
+            function isNodeVisible(node, nodeById) {
+                if (!node) return false;
+                if (node._visible === false) return false;
+                let parentId = node.parentId;
+                while (parentId !== null) {
+                    const parent = nodeById.get(parentId);
+                    if (!parent) break;
+                    if (parent.collapsed) return false;
+                    parentId = parent.parentId;
+                }
+                return true;
+            }
+
             function replaceLiteralOne(text, query, replacement, ignoreCase) {
                 const s = String(text ?? '');
                 if (!ignoreCase) return s.replace(query, replacement);
@@ -5149,8 +5427,10 @@
                 }
 
                 searchMatches = [];
+                const nodeById = buildNodeByIdMap();
                 for (const n of nodesList) {
                     if (!n) continue;
+                    if (!isNodeVisible(n, nodeById)) continue;
                     if (matchesNodeName(n.name, query, regexObj, ignoreCase)) {
                         searchMatches.push(n.id);
                     }
@@ -5268,6 +5548,7 @@
                 });
                 setNodeNameById(nodeId, nextName);
                 updateSearchMatches(false);
+                gotoNextMatch();
             }
 
             function replaceAllMatches() {
@@ -5486,6 +5767,31 @@
                 });
             }
 
+            function expandToLevel(targetLevel) {
+                for (const node of nodesList) {
+                    if (!node) continue;
+                    if (node.parentId === null) {
+                        node.collapsed = false;
+                    } else if (node.level < targetLevel) {
+                        node.collapsed = false;
+                    } else {
+                        node.collapsed = true;
+                    }
+                }
+                relayoutAll();
+                redrawAllLines();
+                minimapDirty = true;
+            }
+
+            for (let level = 1; level <= 9; level++) {
+                const btn = document.getElementById(`expand-level-${level}`);
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        expandToLevel(level);
+                    });
+                }
+            }
+
             if (deleteNodeBtn) {
                 deleteNodeBtn.addEventListener('click', () => {
                     deleteSelectedNodes();
@@ -5567,6 +5873,8 @@
                     const text = await file.text();
                     await loadFromMtText(text);
                     saveMtBtn.disabled = false;
+                    isModified = false;
+                    updateTitle();
                     alert('文件已打开');
                 } catch (err) {
                     if (err.name !== 'AbortError') {
@@ -5578,13 +5886,21 @@
 
             async function saveMtFile() {
                 try {
+                    showSaveStatus();
                     if (!currentFileHandle) {
+                        let suggestedName = '思维导图.mt';
+                        if (nodesList.length > 0) {
+                            const rootNode = nodesList.find(n => n.parentId === null);
+                            if (rootNode && rootNode.name) {
+                                suggestedName = `${rootNode.name}.mt`;
+                            }
+                        }
                         currentFileHandle = await window.showSaveFilePicker({
                             types: [{
                                 description: '思维导图文件',
                                 accept: { 'text/plain': ['.mt'] }
                             }],
-                            suggestedName: '思维导图.mt'
+                            suggestedName: suggestedName
                         });
                     }
 
@@ -5593,8 +5909,12 @@
                     await writable.write(content);
                     await writable.close();
                     saveMtBtn.disabled = false;
+                    isModified = false;
+                    updateTitle();
+                    hideSaveStatus();
                     alert('保存成功');
                 } catch (err) {
+                    hideSaveStatus();
                     if (err.name !== 'AbortError') {
                         console.error('保存文件失败:', err);
                         alert('保存文件失败: ' + err.message);
@@ -5611,7 +5931,7 @@
 
             if (newNodeBtn) {
                 newNodeBtn.addEventListener('click', async () => {
-                    if (currentFileHandle && undoStack.length > 0) {
+                    if (currentFileHandle && isModified) {
                         const confirmed = confirm('当前文件有未保存的更改，是否先保存？');
                         if (confirmed) {
                             await saveMtFile();
@@ -6329,6 +6649,7 @@
                     beginTransientDegrade(240);
                     container.x = -worldX * scale + app.screen.width / 2;
                     container.y = -worldY * scale + app.screen.height / 2;
+                    clampContainerPosition();
                 }
             });
 
@@ -6383,6 +6704,194 @@
                     lastMinimapScale = container.scale.x;
                 }
             });
+
+            window.MindMap = {
+                getSelectedNode: function() {
+                    if (!currentSelectedNode) return null;
+                    const nodeId = currentSelectedNode._nodeData.nodeId;
+                    return nodesList.find(n => n.id === nodeId);
+                },
+
+                getSelectedNodeId: function() {
+                    return currentSelectedNode ? currentSelectedNode._nodeData.nodeId : null;
+                },
+
+                selectNodeById: function(nodeId) {
+                    const cont = nodeGraphics.get(nodeId);
+                    if (cont) {
+                        selectNodeByKeyboard(cont);
+                        return true;
+                    }
+                    return false;
+                },
+
+                selectNodeByName: function(name, exact = false) {
+                    const matches = nodesList.filter(n => {
+                        if (exact) {
+                            return n.name === name;
+                        }
+                        return n.name.includes(name);
+                    });
+                    if (matches.length > 0) {
+                        const cont = nodeGraphics.get(matches[0].id);
+                        if (cont) {
+                            selectNodeByKeyboard(cont);
+                            return matches[0];
+                        }
+                    }
+                    return null;
+                },
+
+                setNodeName: function(nodeId, newName) {
+                    const node = nodesList.find(n => n.id === nodeId);
+                    if (node) {
+                        setNodeNameById(nodeId, newName);
+                        return true;
+                    }
+                    return false;
+                },
+
+                setSelectedNodeName: function(newName) {
+                    const nodeId = this.getSelectedNodeId();
+                    if (nodeId !== null) {
+                        return this.setNodeName(nodeId, newName);
+                    }
+                    return false;
+                },
+
+                addChild: function(parentId, name) {
+                    const parent = nodesList.find(n => n.id === parentId);
+                    if (parent) {
+                        const newNode = new MindNode(nextNodeId++, name, parentId, parent.level + 1);
+                        parent.children.push(newNode);
+                        nodesList.push(newNode);
+                        actualCount = nodesList.length;
+                        
+                        const { container: nodeCont, width, height, textWidth, textHeight } = createNodeGraphics(newNode);
+                        nodeGraphics.set(newNode.id, nodeCont);
+                        container.addChild(nodeCont);
+                        createDomSpanForNode(newNode, width, height, textWidth, textHeight);
+                        
+                        relayoutAll();
+                        redrawAllLines();
+                        minimapDirty = true;
+                        domNeedsUpdate = true;
+                        refreshTopbarStats();
+                        
+                        return newNode;
+                    }
+                    return null;
+                },
+
+                addChildToSelected: function(name) {
+                    const node = this.getSelectedNode();
+                    if (node) {
+                        return this.addChild(node.id, name);
+                    }
+                    return null;
+                },
+
+                addChildren: function(parentId, names) {
+                    const results = [];
+                    for (const name of names) {
+                        const result = this.addChild(parentId, name);
+                        if (result) results.push(result);
+                    }
+                    return results;
+                },
+
+                deleteNode: function(nodeId) {
+                    const node = nodesList.find(n => n.id === nodeId);
+                    if (node && node.parentId !== null) {
+                        deleteNodeSubtreeById(nodeId);
+                        return true;
+                    }
+                    return false;
+                },
+
+                deleteSelectedNode: function() {
+                    const nodeId = this.getSelectedNodeId();
+                    if (nodeId !== null) {
+                        return this.deleteNode(nodeId);
+                    }
+                    return false;
+                },
+
+                findNodesByName: function(name, exact = false) {
+                    return nodesList.filter(n => {
+                        if (exact) {
+                            return n.name === name;
+                        }
+                        return n.name.includes(name);
+                    });
+                },
+
+                findNodeById: function(nodeId) {
+                    return nodesList.find(n => n.id === nodeId);
+                },
+
+                getAllNodes: function() {
+                    return [...nodesList];
+                },
+
+                getNodeCount: function() {
+                    return nodesList.length;
+                },
+
+                collapseNode: function(nodeId) {
+                    const node = nodesList.find(n => n.id === nodeId);
+                    if (node) {
+                        node.collapsed = true;
+                        relayoutAll();
+                        redrawAllLines();
+                        minimapDirty = true;
+                        return true;
+                    }
+                    return false;
+                },
+
+                expandNode: function(nodeId) {
+                    const node = nodesList.find(n => n.id === nodeId);
+                    if (node) {
+                        node.collapsed = false;
+                        relayoutAll();
+                        redrawAllLines();
+                        minimapDirty = true;
+                        return true;
+                    }
+                    return false;
+                },
+
+                expandAll: function() {
+                    setAllNodesCollapsed(false);
+                },
+
+                collapseAll: function() {
+                    setAllNodesCollapsed(true);
+                },
+
+                zoomTo: function(scale) {
+                    updateZoom(Math.min(Math.max(scale, 0.1), 4.0));
+                },
+
+                zoomIn: function() {
+                    updateZoom(container.scale.x * 1.1);
+                },
+
+                zoomOut: function() {
+                    updateZoom(container.scale.x * 0.9);
+                },
+
+                resetView: function() {
+                    updateZoom(1.0);
+                    const rootNode = nodeGraphics.get(0);
+                    if (rootNode) {
+                        selectNodeByKeyboard(rootNode);
+                    }
+                }
+            };
+
+            console.log('🧠 MindMap API 已加载，可在控制台使用 window.MindMap 操作思维导图');
         })().catch(error => {
             console.error('初始化错误:', error);
             const errorDiv = document.createElement('div');
