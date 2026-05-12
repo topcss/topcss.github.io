@@ -1248,7 +1248,7 @@
             </div>
             <div class="modal-body">
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.4</span></div>
+                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.5</span></div>
                     <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div style="height:1px;background:rgba(255,255,255,0.10);margin:4px 0;"></div>
                     <div style="color:rgba(255,255,255,0.84);">
@@ -2775,6 +2775,14 @@
             function getCurrentNodeData() {
                 if (!currentSelectedNode) return null;
                 const nodeId = currentSelectedNode._nodeData.nodeId;
+                return findNodeById(nodeId);
+            }
+
+            function getRootNode() {
+                return nodeGraphics.get(0);
+            }
+
+            function findNodeById(nodeId) {
                 return nodesList.find(n => n.id === nodeId);
             }
 
@@ -2919,7 +2927,7 @@
             }
 
             function attachNodeToParent(node, parentId, insertIndex) {
-                const parent = nodesList.find(n => n.id === parentId);
+                const parent = findNodeById(parentId);
                 if (!parent) return false;
                 node.parentId = parentId;
                 node.level = parent.level + 1;
@@ -2977,8 +2985,7 @@
             }
 
             function deleteNodeSubtreeById(rootId) {
-                const nodeById = new Map();
-                for (const n of nodesList) nodeById.set(n.id, n);
+                const nodeById = buildNodeByIdMap();
                 const rootNode = nodeById.get(rootId);
                 if (!rootNode || rootNode.parentId === null) return;
 
@@ -3018,7 +3025,7 @@
             }
 
             function setNodeNameById(nodeId, newName) {
-                const node = nodesList.find(n => n.id === nodeId);
+                const node = findNodeById(nodeId);
                 const cont = nodeGraphics.get(nodeId);
                 if (!node || !cont) return;
 
@@ -3124,7 +3131,7 @@
                     addNodeAsChild(currentNode);
                     return;
                 }
-                const parentNode = nodesList.find(n => n.id === currentNode.parentId);
+                const parentNode = findNodeById(currentNode.parentId);
                 if (!parentNode) return;
                 const newNode = new MindNode(nextNodeId++, '', parentNode.id, parentNode.level + 1);
                 const idx = parentNode.children.findIndex(c => c.id === currentNode.id);
@@ -3203,7 +3210,7 @@
             function createNodeAsSibling(node, name) {
                 if (node.parentId === null) return null;
                 
-                const parent = nodesList.find(n => n.id === node.parentId);
+                const parent = findNodeById(node.parentId);
                 if (!parent) return null;
                 
                 const idx = parent.children.findIndex(n => n.id === node.id);
@@ -3443,7 +3450,7 @@
                 const currentData = getCurrentNodeData();
                 if (!currentData || currentData.parentId === null) return [];
 
-                const parent = nodesList.find(n => n.id === currentData.parentId);
+                const parent = findNodeById(currentData.parentId);
                 if (!parent) return [];
 
                 return parent.children.map(child => nodeGraphics.get(child.id)).filter(Boolean);
@@ -3523,8 +3530,7 @@
             function deleteSelectedNodes() {
                 if (!selectedNodeIds || selectedNodeIds.size === 0) return;
 
-                const nodeById = new Map();
-                for (const n of nodesList) nodeById.set(n.id, n);
+                const nodeById = buildNodeByIdMap();
 
                 const selectedIds = [];
                 for (const id of selectedNodeIds) selectedIds.push(id);
@@ -3617,7 +3623,7 @@
 
                 refreshView();
 
-                const fallbackCont = nodeGraphics.get(fallbackId) || nodeGraphics.get(0);
+                const fallbackCont = nodeGraphics.get(fallbackId) || getRootNode();
                 if (fallbackCont) {
                     selectNode(fallbackCont);
                     currentSelectedNode = fallbackCont;
@@ -3656,7 +3662,7 @@
                             for (let i = deleteRootSnaps.length - 1; i >= 0; i--) {
                                 deleteNodeSubtreeById(deleteRootSnaps[i].id);
                             }
-                            const fallback = nodeGraphics.get(redoFallbackId) || nodeGraphics.get(0);
+                            const fallback = nodeGraphics.get(redoFallbackId) || getRootNode();
                             if (fallback) {
                                 selectNode(fallback);
                                 currentSelectedNode = fallback;
@@ -3689,7 +3695,7 @@
                         if (nodeContainer && nodeContainer.visible) selectNode(nodeContainer);
                     }
                     if (nodeGraphics.size > 0) {
-                        currentSelectedNode = nodeGraphics.get(0);
+                        currentSelectedNode = getRootNode();
                     }
                     refreshTopbarStats();
                     return;
@@ -3708,7 +3714,7 @@
 
                 switch (e.key) {
                     case 'Home': {
-                        const rootNode = nodeGraphics.get(0);
+                        const rootNode = getRootNode();
                         if (rootNode) {
                             selectNodeByKeyboard(rootNode);
                         }
@@ -3785,7 +3791,7 @@
                         if (currentSelectedNode) {
                             e.preventDefault();
                             const nodeId = currentSelectedNode._nodeData.nodeId;
-                            const nodeData = nodesList.find(n => n.id === nodeId);
+                            const nodeData = findNodeById(nodeId);
                             if (nodeData) {
                                 startNodeEdit(nodeData, currentSelectedNode);
                             }
@@ -3796,7 +3802,7 @@
                         e.preventDefault();
                         if (currentSelectedNode) {
                             const nodeId = currentSelectedNode._nodeData.nodeId;
-                            const nodeData = nodesList.find(n => n.id === nodeId);
+                            const nodeData = findNodeById(nodeId);
                             if (nodeData) {
                                 startNodeEdit(nodeData, currentSelectedNode);
                             }
@@ -4708,7 +4714,7 @@
             }
 
             function setNodeCollapsed(nodeId, collapsed) {
-                const node = nodesList.find(n => n.id === nodeId);
+                const node = findNodeById(nodeId);
                 if (!node) return;
                 if (node.parentId === null) {
                     node.collapsed = !!collapsed;
@@ -4748,7 +4754,7 @@
             }
 
             function toggleNodeCollapsed(nodeId) {
-                const node = nodesList.find(n => n.id === nodeId);
+                const node = findNodeById(nodeId);
                 if (!node) return;
                 if (!node.children || node.children.length === 0) return;
                 const next = !node.collapsed;
@@ -4808,7 +4814,7 @@
 
                 const nextCurrent = (prevCurrentId !== null && nodeGraphics.get(prevCurrentId) && nodeGraphics.get(prevCurrentId).visible)
                     ? nodeGraphics.get(prevCurrentId)
-                    : (nodeGraphics.get(0) || null);
+                    : (getRootNode() || null);
                 if (nextCurrent) {
                     currentSelectedNode = nextCurrent;
                     ensureNodeInViewport(nextCurrent);
@@ -5020,8 +5026,7 @@
 
             function redrawAllLines() {
                 linesGraphics.clear();
-                const nodeById = new Map();
-                for (const n of nodesList) nodeById.set(n.id, n);
+                const nodeById = buildNodeByIdMap();
 
                 for (const node of nodesList) {
                     if (node._visible === false) continue;
@@ -5042,7 +5047,7 @@
                 zoomValue.textContent = `100%`;
             }
             container.scale.set(1.0);
-            const rootNode = nodeGraphics.get(0);
+            const rootNode = getRootNode();
             if (rootNode) {
                 selectNode(rootNode);
                 currentSelectedNode = rootNode;
@@ -5467,7 +5472,7 @@
             }
 
             function setNodeNameFast(nodeId, newName) {
-                const node = nodesList.find(n => n.id === nodeId);
+                const node = findNodeById(nodeId);
                 const cont = nodeGraphics.get(nodeId);
                 if (!node || !cont) return;
                 node.name = newName;
@@ -5482,7 +5487,7 @@
                 if (searchMatchIndex < 0) searchMatchIndex = 0;
 
                 const nodeId = searchMatches[searchMatchIndex];
-                const node = nodesList.find(n => n.id === nodeId);
+                const node = findNodeById(nodeId);
                 if (!node) return;
 
                 const query = searchInput ? searchInput.value : '';
@@ -5719,7 +5724,7 @@
 
             if (goRootBtn) {
                 goRootBtn.addEventListener('click', () => {
-                    const rootNode = nodeGraphics.get(0);
+                    const rootNode = getRootNode();
                     if (rootNode) {
                         selectNodeByKeyboard(rootNode);
                     }
@@ -5883,7 +5888,7 @@
                 redrawAllLines();
                 domNeedsUpdate = true;
 
-                const rootNodeCont = nodeGraphics.get(0);
+                const rootNodeCont = getRootNode();
                 if (rootNodeCont) {
                     selectNodeByKeyboard(rootNodeCont);
                 }
@@ -6029,7 +6034,7 @@
             function handleAddChild() {
                 if (!currentSelectedNode) return;
                 const nodeId = currentSelectedNode._nodeData.nodeId;
-                const parentNode = nodesList.find(n => n.id === nodeId);
+                const parentNode = findNodeById(nodeId);
                 if (!parentNode) return;
 
                 const newNode = createNodeUnderParent(parentNode, '');
@@ -6096,7 +6101,7 @@
             function handleAddSibling() {
                 if (!currentSelectedNode) return;
                 const nodeId = currentSelectedNode._nodeData.nodeId;
-                const node = nodesList.find(n => n.id === nodeId);
+                const node = findNodeById(nodeId);
                 if (!node || node.parentId === null) return;
 
                 const newNode = createNodeAsSibling(node, '');
@@ -6121,7 +6126,7 @@
 
                     const addSnap = serializeSubtree(newNode);
                     const addParentId = node.parentId;
-                    const addIndex = nodesList.find(n => n.id === addParentId)?.children.findIndex(c => c.id === newNode.id) ?? 0;
+                    const addIndex = findNodeById(addParentId)?.children.findIndex(c => c.id === newNode.id) ?? 0;
                     pushCommand({
                         type: 'add',
                         node: { id: newNode.id, parentId: addParentId, index: addIndex, serialized: addSnap },
@@ -6222,7 +6227,7 @@
                 
                 if (currentSelectedNode) {
                     const nodeId = currentSelectedNode._nodeData.nodeId;
-                    const node = nodesList.find(n => n.id === nodeId);
+                    const node = findNodeById(nodeId);
                     if (node) {
                         exportFilename.value = node.name;
                     }
@@ -6410,11 +6415,11 @@
                 const createdRootIds = createdRoots.map(r => r.id);
                 const rootSnapshots = [];
                 for (const rid of createdRootIds) {
-                    const rn = nodesList.find(n => n.id === rid);
+                    const rn = findNodeById(rid);
                     if (rn) rootSnapshots.push({
                         id: rn.id,
                         parentId: rn.parentId,
-                        index: nodesList.find(n => n.id === rn.parentId)?.children.findIndex(c => c.id === rn.id) ?? -1,
+                        index: findNodeById(rn.parentId)?.children.findIndex(c => c.id === rn.id) ?? -1,
                         serialized: serializeSubtree(rn)
                     });
                 }
@@ -6757,7 +6762,7 @@
                 getSelectedNode: function() {
                     if (!currentSelectedNode) return null;
                     const nodeId = currentSelectedNode._nodeData.nodeId;
-                    return nodesList.find(n => n.id === nodeId);
+                    return findNodeById(nodeId);
                 },
 
                 getSelectedNodeId: function() {
@@ -6791,7 +6796,7 @@
                 },
 
                 setNodeName: function(nodeId, newName) {
-                    const node = nodesList.find(n => n.id === nodeId);
+                    const node = findNodeById(nodeId);
                     if (node) {
                         setNodeNameById(nodeId, newName);
                         return true;
@@ -6808,7 +6813,7 @@
                 },
 
                 addChild: function(parentId, name) {
-                    const parent = nodesList.find(n => n.id === parentId);
+                    const parent = findNodeById(parentId);
                     if (parent) {
                         const newNode = new MindNode(nextNodeId++, name, parentId, parent.level + 1);
                         parent.children.push(newNode);
@@ -6849,7 +6854,7 @@
                 },
 
                 deleteNode: function(nodeId) {
-                    const node = nodesList.find(n => n.id === nodeId);
+                    const node = findNodeById(nodeId);
                     if (node && node.parentId !== null) {
                         deleteNodeSubtreeById(nodeId);
                         return true;
@@ -6875,7 +6880,7 @@
                 },
 
                 findNodeById: function(nodeId) {
-                    return nodesList.find(n => n.id === nodeId);
+                    return findNodeById(nodeId);
                 },
 
                 getAllNodes: function() {
@@ -6887,7 +6892,7 @@
                 },
 
                 collapseNode: function(nodeId) {
-                    const node = nodesList.find(n => n.id === nodeId);
+                    const node = findNodeById(nodeId);
                     if (node) {
                         node.collapsed = true;
                         relayoutAll();
@@ -6899,7 +6904,7 @@
                 },
 
                 expandNode: function(nodeId) {
-                    const node = nodesList.find(n => n.id === nodeId);
+                    const node = findNodeById(nodeId);
                     if (node) {
                         node.collapsed = false;
                         relayoutAll();
@@ -6932,7 +6937,7 @@
 
                 resetView: function() {
                     updateZoom(1.0);
-                    const rootNode = nodeGraphics.get(0);
+                    const rootNode = getRootNode();
                     if (rootNode) {
                         selectNodeByKeyboard(rootNode);
                     }
