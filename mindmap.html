@@ -1248,7 +1248,7 @@
             </div>
             <div class="modal-body">
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.3</span></div>
+                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.4</span></div>
                     <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div style="height:1px;background:rgba(255,255,255,0.10);margin:4px 0;"></div>
                     <div style="color:rgba(255,255,255,0.84);">
@@ -1974,17 +1974,12 @@
                 toParent.children.splice(idx, 0, node);
                 applyStyleAndMeasureSubtree(node);
 
-                relayoutAll();
-                redrawAllLines();
-                minimapDirty = true;
-                domNeedsUpdate = true;
+                refreshView();
                 refreshTopbarStats();
 
                 const cont = nodeGraphics.get(nodeId);
                 if (cont) {
-                    clearAllSelections();
-                    selectNode(cont);
-                    currentSelectedNode = cont;
+                    selectSingleNode(cont);
                 }
 
                 return { fromParentId, fromIndex, toParentId, toIndex: idx };
@@ -2096,10 +2091,7 @@
                     applyStyleAndMeasureSubtree(move.node);
                 }
                 
-                relayoutAll();
-                redrawAllLines();
-                minimapDirty = true;
-                domNeedsUpdate = true;
+                refreshView();
                 refreshTopbarStats();
                 
                 clearAllSelections();
@@ -2635,9 +2627,7 @@
                         } else if (selectedNodeIds && selectedNodeIds.has(nodeFound._nodeData.nodeId)) {
                             currentSelectedNode = nodeFound;
                         } else {
-                            clearAllSelections();
-                            selectNode(nodeFound);
-                            currentSelectedNode = nodeFound;
+                            selectSingleNode(nodeFound);
                         }
                     refreshTopbarStats();
                     } else {
@@ -2778,10 +2768,7 @@
             function selectNodeByKeyboard(nodeContainer) {
                 if (!nodeContainer) return;
 
-                clearAllSelections();
-                selectNode(nodeContainer);
-                currentSelectedNode = nodeContainer;
-                ensureNodeInViewport(nodeContainer);
+                selectSingleNode(nodeContainer, true);
                 refreshTopbarStats();
             }
 
@@ -3008,19 +2995,8 @@
                     cancelNodeEdit();
                 }
 
-                if (currentSelectedNode && deleteSet.has(currentSelectedNode._nodeData.nodeId)) {
-                    currentSelectedNode = null;
-                    selectedNodes.clear();
-                    selectedNodeIds.clear();
-                    minimapDirty = true;
-                    refreshTopbarStats();
-                }
-
-                selectedNodes.forEach(node => {
-                    if (deleteSet.has(node._nodeData.nodeId)) {
-                        selectedNodes.delete(node);
-                    }
-                });
+                clearAllSelections();
+                currentSelectedNode = null;
 
                 for (const id of deleteSet) {
                     const node = nodeById.get(id);
@@ -3038,8 +3014,7 @@
                 removeNodesGraphicsAndSpans(deleteSet);
 
                 actualCount = nodesList.length;
-                relayoutAll();
-                redrawAllLines();
+                refreshView();
             }
 
             function setNodeNameById(nodeId, newName) {
@@ -3104,12 +3079,9 @@
                 container.addChild(nodeCont);
                 createDomSpanForNode(newNode, width, height, textWidth, textHeight);
 
-                relayoutAll();
-                redrawAllLines();
+                refreshView();
 
-                clearAllSelections();
-                selectNode(nodeCont);
-                currentSelectedNode = nodeCont;
+                selectSingleNode(nodeCont);
                 ensureNodeInViewport(nodeCont);
                 startNodeEdit(newNode, nodeCont);
                 refreshTopbarStats();
@@ -3134,13 +3106,10 @@
                         if (restoredRoot && attachNodeToParent(restoredRoot, addParentId, addIndex)) {
                             renderNodeAndDescendants(restoredRoot);
                             actualCount = nodesList.length;
-                            relayoutAll();
-                            redrawAllLines();
-                            const nodeCont2 = nodeGraphics.get(restoredRoot.id);
+                refreshView();
+                const nodeCont2 = nodeGraphics.get(restoredRoot.id);
                             if (nodeCont2) {
-                                clearAllSelections();
-                                selectNode(nodeCont2);
-                                currentSelectedNode = nodeCont2;
+                                selectSingleNode(nodeCont2);
                                 ensureNodeInViewport(nodeCont2);
                             }
                         }
@@ -3173,8 +3142,7 @@
                 container.addChild(nodeCont);
                 createDomSpanForNode(newNode, created.width, created.height, created.textWidth, created.textHeight);
 
-                relayoutAll();
-                redrawAllLines();
+                refreshView();
 
                 clearAllSelections();
                 if (nodeCont) {
@@ -3205,13 +3173,10 @@
                         if (restoredRoot && attachNodeToParent(restoredRoot, addParentId, insertIndex)) {
                             renderNodeAndDescendants(restoredRoot);
                             actualCount = nodesList.length;
-                            relayoutAll();
-                            redrawAllLines();
-                            const nodeCont2 = nodeGraphics.get(restoredRoot.id);
+                refreshView();
+                const nodeCont2 = nodeGraphics.get(restoredRoot.id);
                             if (nodeCont2) {
-                                clearAllSelections();
-                                selectNode(nodeCont2);
-                                currentSelectedNode = nodeCont2;
+                                selectSingleNode(nodeCont2);
                                 ensureNodeInViewport(nodeCont2);
                             }
                         }
@@ -3368,30 +3333,7 @@
                     let parent = indent === 0 ? targetNode : (stack[indent - 1] || targetNode);
                     if (isTargetRoot && indent === 0) {
                         targetNode.name = name;
-                        const rootDomSpan = domNodeById.get(targetNode.id);
-                        if (rootDomSpan) {
-                            rootDomSpan.textContent = targetNode.name;
-                        }
-                        const rootNodeCont = nodeGraphics.get(targetNode.id);
-                        if (rootNodeCont) {
-                            const style = rootNodeCont._nodeData.style;
-                            const measured = measureNodeText(style, targetNode.name, 520);
-                            rootNodeCont._nodeData.width = measured.width;
-                            rootNodeCont._nodeData.height = measured.height;
-                            targetNode._width = measured.width;
-                            targetNode._height = measured.height;
-
-                            const bg = rootNodeCont._nodeData.bg;
-                            bg.clear();
-                            bg.beginFill(style.bgColor);
-                            bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
-                            bg.endFill();
-                            bg.lineStyle(1.5, style.borderColor, 0.8);
-                            bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
-
-                            rootNodeCont.pivot.set(measured.width / 2, measured.height / 2);
-                            updateHoverFrameForContainer(rootNodeCont);
-                        }
+                        updateRootNodeDisplay(targetNode);
                         firstCreatedNode = targetNode;
                         stack[0] = targetNode;
                         continue;
@@ -3424,9 +3366,8 @@
 
                 if (created > 0) {
                     actualCount = nodesList.length;
-                    relayoutAll();
-                    redrawAllLines();
-                    if (app && app.renderer && app.stage) {
+                refreshView();
+                if (app && app.renderer && app.stage) {
                         tickDOMNodes();
                         app.renderer.render(app.stage);
                     }
@@ -3468,15 +3409,11 @@
                                     }
                                 }
                                 actualCount = nodesList.length;
-                                relayoutAll();
-                                redrawAllLines();
-                                const first = rootSnapshots[0];
+                refreshView();
+                const first = rootSnapshots[0];
                                 const cont = first ? nodeGraphics.get(first.id) : null;
                                 if (cont) {
-                                    clearAllSelections();
-                                    selectNode(cont);
-                                    currentSelectedNode = cont;
-                                    ensureNodeInViewport(cont);
+                                    selectSingleNode(cont, true);
                                 }
                                 isHistoryApplying = false;
                                 updateUndoRedoButtons();
@@ -3678,8 +3615,7 @@
                 actualCount = nodesList.length;
                 removeNodesGraphicsAndSpans(deleteSet);
 
-                relayoutAll();
-                redrawAllLines();
+                refreshView();
 
                 const fallbackCont = nodeGraphics.get(fallbackId) || nodeGraphics.get(0);
                 if (fallbackCont) {
@@ -3711,10 +3647,7 @@
                             const first = deleteRootSnaps[0];
                             const cont = first ? nodeGraphics.get(first.id) : null;
                             if (cont) {
-                                clearAllSelections();
-                                selectNode(cont);
-                                currentSelectedNode = cont;
-                                ensureNodeInViewport(cont);
+                                selectSingleNode(cont, true);
                             }
                         },
                         redo: () => {
@@ -3980,8 +3913,7 @@
                 }
 
                 actualCount = nodesList.length;
-                relayoutAll();
-                redrawAllLines();
+                refreshView();
 
                 if (rootSnapshots.length > 0) {
                     pushCommand({
@@ -4006,10 +3938,9 @@
                                 }
                             }
                             actualCount = nodesList.length;
-                            relayoutAll();
-                            redrawAllLines();
-                            isHistoryApplying = false;
-                            updateUndoRedoButtons();
+                refreshView();
+                isHistoryApplying = false;
+                updateUndoRedoButtons();
                         }
                     });
                 }
@@ -4788,8 +4719,7 @@
                 const selectedIds = selectedNodeIds ? [...selectedNodeIds] : [];
                 const prevCurrentId = currentSelectedNode && currentSelectedNode._nodeData ? currentSelectedNode._nodeData.nodeId : null;
 
-                relayoutAll();
-                redrawAllLines();
+                refreshView();
 
                 if (editingInput && editingInput.node) {
                     const editCont = nodeGraphics.get(editingInput.node.id);
@@ -4861,8 +4791,7 @@
                 const selectedIds = selectedNodeIds ? [...selectedNodeIds] : [];
                 const prevCurrentId = currentSelectedNode && currentSelectedNode._nodeData ? currentSelectedNode._nodeData.nodeId : null;
 
-                relayoutAll();
-                redrawAllLines();
+                refreshView();
 
                 if (editingInput && editingInput.node) {
                     const editCont = nodeGraphics.get(editingInput.node.id);
@@ -5510,9 +5439,7 @@
 
                 const cont = nodeGraphics.get(nodeId);
                 if (cont && cont.visible) {
-                    clearAllSelections();
-                    selectNode(cont);
-                    currentSelectedNode = cont;
+                    selectSingleNode(cont);
                     ensureNodeInViewport(cont);
                     refreshTopbarStats();
                 }
@@ -5840,6 +5767,79 @@
                 });
             }
 
+            function selectSingleNode(nodeCont, ensureVisible = false) {
+                clearAllSelections();
+                if (nodeCont) {
+                    selectNode(nodeCont);
+                    currentSelectedNode = nodeCont;
+                    if (ensureVisible) {
+                        ensureNodeInViewport(nodeCont);
+                    }
+                } else {
+                    currentSelectedNode = null;
+                }
+            }
+
+            function refreshView() {
+                relayoutAll();
+                redrawAllLines();
+                minimapDirty = true;
+                domNeedsUpdate = true;
+            }
+
+            function updateRootNodeDisplay(rootNode) {
+                const rootNodeCont = nodeGraphics.get(rootNode.id);
+                const rootDomSpan = domNodeById.get(rootNode.id);
+
+                if (rootNodeCont) {
+                    const style = rootNodeCont._nodeData.style;
+                    const measured = measureNodeText(style, rootNode.name, 520);
+                    rootNodeCont._nodeData.width = measured.width;
+                    rootNodeCont._nodeData.height = measured.height;
+                    rootNode._width = measured.width;
+                    rootNode._height = measured.height;
+
+                    const bg = rootNodeCont._nodeData.bg;
+                    bg.clear();
+                    bg.beginFill(style.bgColor);
+                    bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
+                    bg.endFill();
+                    bg.lineStyle(1.5, style.borderColor, 0.8);
+                    bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
+
+                    rootNodeCont.pivot.set(measured.width / 2, measured.height / 2);
+                    updateHoverFrameForContainer(rootNodeCont);
+
+                    if (rootNode.children && rootNode.children.length > 0) {
+                        const badge = collapseBadgeById.get(rootNode.id);
+                        if (badge) {
+                            badge.x = rootNodeCont.x + measured.width / 2 + 8;
+                            badge.y = rootNodeCont.y - 6;
+                        }
+                    }
+
+                    if (rootDomSpan) {
+                        rootDomSpan.textContent = rootNode.name;
+                        rootDomSpan._width = measured.width;
+                        rootDomSpan._height = measured.height;
+                        rootDomSpan._paddingX = style.paddingX;
+                        rootDomSpan._paddingY = style.paddingY;
+                        rootDomSpan._maxWidth = 520;
+                    }
+                } else if (rootDomSpan) {
+                    rootDomSpan.textContent = rootNode.name;
+                    const style = getStyleForLevel(rootNode.level, rootNode.parentId === null);
+                    const measured = measureNodeText(style, rootNode.name, 520);
+                    rootDomSpan._width = measured.width;
+                    rootDomSpan._height = measured.height;
+                    rootDomSpan._paddingX = style.paddingX;
+                    rootDomSpan._paddingY = style.paddingY;
+                    rootDomSpan._maxWidth = 520;
+                }
+
+                domNeedsUpdate = true;
+            }
+
             function exportToMtText() {
                 const rootNode = nodesList.find(n => n.parentId === null);
                 if (!rootNode) return '';
@@ -5864,47 +5864,7 @@
 
                 rootNode.name = parsedLines[0].name;
 
-                const rootNodeCont = nodeGraphics.get(0);
-                if (rootNodeCont) {
-                    const style = rootNodeCont._nodeData.style;
-                    const measured = measureNodeText(style, rootNode.name, 520);
-                    rootNodeCont._nodeData.width = measured.width;
-                    rootNodeCont._nodeData.height = measured.height;
-                    rootNode._width = measured.width;
-                    rootNode._height = measured.height;
-
-                    const bg = rootNodeCont._nodeData.bg;
-                    bg.clear();
-                    bg.beginFill(style.bgColor);
-                    bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
-                    bg.endFill();
-                    bg.lineStyle(1.5, style.borderColor, 0.8);
-                    bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
-
-                    rootNodeCont.pivot.set(measured.width / 2, measured.height / 2);
-
-                    updateHoverFrameForContainer(rootNodeCont);
-
-                    if (rootNode.children && rootNode.children.length > 0) {
-                        const badge = collapseBadgeById.get(rootNode.id);
-                        if (badge) {
-                            badge.x = rootNodeCont.x + measured.width / 2 + 8;
-                            badge.y = rootNodeCont.y - 6;
-                        }
-                    }
-                }
-
-                const rootDomSpan = domNodeById.get(0);
-                if (rootDomSpan) {
-                    rootDomSpan.textContent = rootNode.name;
-                    const style = getStyleForLevel(rootNode.level, rootNode.parentId === null);
-                    const measured = measureNodeText(style, rootNode.name, 520);
-                    rootDomSpan._width = measured.width;
-                    rootDomSpan._height = measured.height;
-                    rootDomSpan._paddingX = style.paddingX;
-                    rootDomSpan._paddingY = style.paddingY;
-                    rootDomSpan._maxWidth = 520;
-                }
+                updateRootNodeDisplay(rootNode);
 
                 const stack = [];
                 stack[0] = rootNode;
@@ -5923,6 +5883,7 @@
                 redrawAllLines();
                 domNeedsUpdate = true;
 
+                const rootNodeCont = nodeGraphics.get(0);
                 if (rootNodeCont) {
                     selectNodeByKeyboard(rootNodeCont);
                 }
@@ -6122,10 +6083,7 @@
                                 refreshTopbarStats();
                                 const nodeCont2 = nodeGraphics.get(restoredRoot.id);
                                 if (nodeCont2) {
-                                    clearAllSelections();
-                                    selectNode(nodeCont2);
-                                    currentSelectedNode = nodeCont2;
-                                    ensureNodeInViewport(nodeCont2);
+                                    selectSingleNode(nodeCont2, true);
                                 }
                             }
                             isHistoryApplying = false;
@@ -6192,10 +6150,7 @@
                                 refreshTopbarStats();
                                 const nodeCont2 = nodeGraphics.get(restoredRoot.id);
                                 if (nodeCont2) {
-                                    clearAllSelections();
-                                    selectNode(nodeCont2);
-                                    currentSelectedNode = nodeCont2;
-                                    ensureNodeInViewport(nodeCont2);
+                                    selectSingleNode(nodeCont2, true);
                                 }
                             }
                             isHistoryApplying = false;
@@ -6438,30 +6393,7 @@
 
                     if (tree[0] && tree[0].name) {
                         currentNodeData.name = tree[0].name;
-                        const rootDomSpan = domNodeById.get(currentNodeData.id);
-                        if (rootDomSpan) {
-                            rootDomSpan.textContent = currentNodeData.name;
-                        }
-                        const rootNodeCont = nodeGraphics.get(currentNodeData.id);
-                        if (rootNodeCont) {
-                            const style = rootNodeCont._nodeData.style;
-                            const measured = measureNodeText(style, currentNodeData.name, 520);
-                            rootNodeCont._nodeData.width = measured.width;
-                            rootNodeCont._nodeData.height = measured.height;
-                            currentNodeData._width = measured.width;
-                            currentNodeData._height = measured.height;
-
-                            const bg = rootNodeCont._nodeData.bg;
-                            bg.clear();
-                            bg.beginFill(style.bgColor);
-                            bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
-                            bg.endFill();
-                            bg.lineStyle(1.5, style.borderColor, 0.8);
-                            bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
-
-                            rootNodeCont.pivot.set(measured.width / 2, measured.height / 2);
-                            updateHoverFrameForContainer(rootNodeCont);
-                        }
+                        updateRootNodeDisplay(currentNodeData);
 
                         if (tree[0].children && tree[0].children.length > 0) {
                             createdRoots = createNodesFromTree(tree[0].children, currentNodeData, currentNodeData.level);
@@ -6472,10 +6404,7 @@
                 }
 
                 actualCount = nodesList.length;
-                relayoutAll();
-                redrawAllLines();
-                minimapDirty = true;
-                domNeedsUpdate = true;
+                refreshView();
                 refreshTopbarStats();
 
                 const createdRootIds = createdRoots.map(r => r.id);
