@@ -1247,7 +1247,7 @@
             </div>
             <div class="modal-body">
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.6</span></div>
+                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.7</span></div>
                     <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div style="height:1px;background:rgba(255,255,255,0.10);margin:4px 0;"></div>
                     <div style="color:rgba(255,255,255,0.84);">
@@ -1500,12 +1500,29 @@
             const container = new PIXI.Container();
             app.stage.addChild(container);
 
+            let viewportMargin = 200;
+            function updateViewportClipping() {
+                const scale = container.scale.x;
+                const viewX = -container.x / scale;
+                const viewY = -container.y / scale;
+                const viewWidth = app.screen.width / scale;
+                const viewHeight = app.screen.height / scale;
+                const margin = viewportMargin / scale;
+                
+                container.filterArea = new PIXI.Rectangle(
+                    viewX - margin,
+                    viewY - margin,
+                    viewWidth + margin * 2,
+                    viewHeight + margin * 2
+                );
+            }
+
             let isDragging = false;
             let lastDragPoint = { x: 0, y: 0 };
             let onDocumentDragMove = null;
             let onDocumentDragUp = null;
 
-            const DEGRADE_RENDER_NODE_THRESHOLD = 12000;
+            const DEGRADE_RENDER_NODE_THRESHOLD = 40000;
             let renderDegraded = false;
             let degradeRestoreTimer = 0;
             function shouldDegradeRender() {
@@ -1596,6 +1613,7 @@
                                 container.x += dx;
                                 container.y += dy;
                                 lastDragPoint = { x: docMouseX, y: docMouseY };
+                                updateViewportClipping();
                             }
                         }
                     };
@@ -1630,6 +1648,7 @@
                         container.x += dx;
                         container.y += dy;
                         lastDragPoint = { x: mouseX, y: mouseY };
+                        updateViewportClipping();
                     }
                 }
             });
@@ -4056,6 +4075,7 @@
                 }
 
                 clampContainerPosition();
+                updateViewportClipping();
 
                 zoomValue.textContent = `${Math.round(newScale * 100)}%`;
             }
@@ -4089,12 +4109,14 @@
                         container.x += e.deltaY * scrollSpeed;
                     }
                     clampContainerPosition();
+                    updateViewportClipping();
                 } else {
                     const scrollSpeed = 4;
                     if (canDrag(0, e.deltaY * scrollSpeed)) {
                         container.y += e.deltaY * scrollSpeed;
                     }
                     clampContainerPosition();
+                    updateViewportClipping();
                 }
             });
 
@@ -4267,11 +4289,6 @@
             let actualCount = nodesList.length;
             let nextNodeId = nodesList.reduce((m, n) => Math.max(m, n.id), 0) + 1;
             console.log(`✅ 实际生成节点数: ${actualCount}`);
-            if (app && app.ticker) {
-                if (actualCount >= 60000) app.ticker.maxFPS = 6;
-                else if (actualCount >= 20000) app.ticker.maxFPS = 10;
-                else if (actualCount >= 8000) app.ticker.maxFPS = 20;
-            }
 
             // ========== 4. 树形布局算法 ==========
             const levelGapX = 90;
@@ -4487,11 +4504,11 @@
                     }
                 }
 
-                if (typeof updateCollapseBadges === 'function' && nodesList.length < 40000) {
+                if (typeof updateCollapseBadges === 'function' && nodesList.length < DEGRADE_RENDER_NODE_THRESHOLD) {
                     updateCollapseBadges();
                 }
                 updateGraphBounds();
-                if (nodesList.length < 40000) minimapDirty = true;
+                if (nodesList.length < DEGRADE_RENDER_NODE_THRESHOLD) minimapDirty = true;
                 domNeedsUpdate = true;
                 levelNavCacheDirty = true;
             }
@@ -4987,6 +5004,7 @@
             }
 
             relayoutAll();
+            updateViewportClipping();
 
             container.addChild(selectionGraphics);
             container.addChild(dndPreviewGraphics);
@@ -6659,6 +6677,7 @@
                     container.x = -worldX * scale + app.screen.width / 2;
                     container.y = -worldY * scale + app.screen.height / 2;
                     clampContainerPosition();
+                    updateViewportClipping();
                 }
             });
 
@@ -6677,6 +6696,7 @@
                     container.y -= dy / mmScale * scale;
 
                     lastMinimapPos = { x: currentX, y: currentY };
+                    updateViewportClipping();
                 }
             });
 
@@ -6695,7 +6715,7 @@
             let lastMinimapScale = NaN;
 
             app.ticker.add(() => {
-                if (nodesList.length > 40000) return;
+                if (nodesList.length > DEGRADE_RENDER_NODE_THRESHOLD) return;
                 if (minimapDirty) {
                     drawMinimap();
                     minimapDirty = false;
