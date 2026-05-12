@@ -1,20 +1,91 @@
+
 <!DOCTYPE html>
-<html lang="zh-CN" style="background:#0b1020;">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>思维导图极速版</title>
     <style>
+        :root {
+            --bg-primary: #0b1020;
+            --bg-secondary: #0e1118;
+            --bg-tertiary: rgba(14, 17, 24, 0.55);
+            --bg-card: rgba(0, 0, 0, 0.82);
+            --text-primary: rgba(235, 240, 255, 0.92);
+            --text-secondary: rgba(235, 240, 255, 0.7);
+            --text-muted: rgba(235, 240, 255, 0.5);
+            --border-color: rgba(255, 255, 255, 0.14);
+            --border-hover: rgba(255, 255, 255, 0.22);
+            --accent-color: #00ff88;
+            --accent-bg: rgba(0, 255, 136, 0.12);
+            --accent-border: rgba(0, 255, 136, 0.35);
+            --link-color: #4ea1ff;
+            --warning-color: #ffaa00;
+            --error-color: #ff6666;
+            --success-color: #00ff88;
+            --node-root-bg: #6c5ce7;
+            --node-root-border: #a29bfe;
+            --node-root-text: #ffffff;
+            --node-level1-bg: #4a4e69;
+            --node-level1-border: #6c6f8d;
+            --node-level1-text: #f0f0f0;
+            --node-default-bg: #2d2f4a;
+            --node-default-border: #4a5b8c;
+            --node-default-text: #d4d4d8;
+            --node-selected-bg: #7e68ff;
+            --node-selected-border: #00ff88;
+            --line-color: #4a5b8c;
+            --hover-color: #4a5b8c;
+            --minimap-bg: rgba(13, 17, 23, 0.3);
+            --search-bg: rgba(14, 17, 24, 0.80);
+            --canvas-bg: #0d1117;
+        }
+
+        .theme-light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: rgba(255, 255, 255, 0.85);
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a68;
+            --text-muted: #8a8a9a;
+            --border-color: rgba(0, 0, 0, 0.12);
+            --border-hover: rgba(0, 0, 0, 0.2);
+            --accent-color: #00c853;
+            --accent-bg: rgba(0, 200, 83, 0.12);
+            --accent-border: rgba(0, 200, 83, 0.35);
+            --link-color: #1e88e5;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --success-color: #00c853;
+            --node-root-bg: #00af54;
+            --node-root-border: #10b981;
+            --node-root-text: #ffffff;
+            --node-level1-bg: #f1f5f9;
+            --node-level1-border: #94a3b8;
+            --node-level1-text: #1e293b;
+            --node-default-bg: #f1f5f9;
+            --node-default-border: #94a3b8;
+            --node-default-text: #334155;
+            --node-selected-bg: #dbeafe;
+            --node-selected-border: #6b88ff;
+            --line-color: #94a3b8;
+            --hover-color: #94a3b8;
+            --minimap-bg: rgba(241, 245, 249, 0.8);
+            --search-bg: rgba(255, 255, 255, 0.92);
+            --canvas-bg: #f1f5f9;
+        }
+
         html {
-            background: #0b1020;
+            background: var(--bg-primary);
         }
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
             font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
-            background: #0b1020;
+            background: var(--bg-primary);
         }
 
         #topbar {
@@ -32,17 +103,17 @@
             height: auto;
             min-height: 28px;
             overflow: visible;
-            background: rgba(14, 17, 24, 0.55);
+            background: var(--bg-tertiary);
             backdrop-filter: blur(10px);
             border-radius: 48px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid var(--border-color);
         }
 
         .topbar-btn {
             appearance: none;
-            border: 1px solid rgba(0, 255, 136, 0.35);
-            background: rgba(0, 255, 136, 0.12);
-            color: #00ff88;
+            border: 1px solid var(--accent-border);
+            background: var(--accent-bg);
+            color: var(--accent-color);
             font-family: monospace;
             font-size: 12px;
             padding: 6px 10px;
@@ -62,6 +133,10 @@
             display: block;
             opacity: 0.9;
             filter: invert(92%);
+        }
+
+        .theme-light .topbar-btn .lucide-icon {
+            filter: invert(20%);
         }
 
         .topbar-btn:hover .lucide-icon {
@@ -86,8 +161,8 @@
             padding: 6px 10px;
             border-radius: 12px;
             background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #0f0;
+            border: 1px solid var(--border-color);
+            color: var(--accent-color);
             font-family: monospace;
             font-size: 12px;
             font-weight: 700;
@@ -98,12 +173,17 @@
             z-index: 15;
         }
 
+        .theme-light .topbar-stats {
+            background: rgba(0, 0, 0, 0.06);
+            color: #10b981;
+        }
+
         .save-status {
             padding: 6px 10px;
             border-radius: 12px;
             background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(0, 255, 136, 0.3);
-            color: #00ff88;
+            border: 1px solid var(--accent-border);
+            color: var(--accent-color);
             font-family: monospace;
             font-size: 12px;
             font-weight: 700;
@@ -132,9 +212,9 @@
 
         .menu-btn {
             appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid var(--border-color);
             background: rgba(255, 255, 255, 0.06);
-            color: rgba(235, 240, 255, 0.92);
+            color: var(--text-primary);
             font-family: inherit;
             font-size: 12px;
             padding: 6px 10px;
@@ -160,6 +240,10 @@
             filter: invert(92%);
         }
 
+        .theme-light .menu-btn .lucide-icon {
+            filter: invert(20%);
+        }
+
         .menu-btn .menu-caret {
             width: 12px;
             height: 12px;
@@ -171,14 +255,25 @@
 
         .menu-btn:hover {
             background: rgba(255, 255, 255, 0.09);
-            border-color: rgba(255, 255, 255, 0.22);
+            border-color: var(--border-hover);
             box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .theme-light .menu-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
         }
 
         .menu-container:has(.menu-dropdown.show) .menu-btn {
             background: rgba(255, 255, 255, 0.10);
             border-color: rgba(255, 255, 255, 0.26);
             box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .theme-light .menu-container:has(.menu-dropdown.show) .menu-btn {
+            background: rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.20);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
         }
 
         .menu-container:has(.menu-dropdown.show) .menu-btn .menu-caret {
@@ -191,12 +286,16 @@
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12), 0 10px 24px rgba(0, 0, 0, 0.4);
         }
 
+        .theme-light .menu-btn:focus-visible {
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10), 0 10px 24px rgba(0, 0, 0, 0.2);
+        }
+
         .menu-dropdown {
             position: absolute;
             top: calc(100% + 8px);
             left: 0;
-            background: rgba(14, 17, 24, 0.82);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 6px;
             min-width: 188px;
@@ -216,7 +315,7 @@
             appearance: none;
             border: none;
             background: transparent;
-            color: rgba(235, 240, 255, 0.88);
+            color: var(--text-primary);
             font-family: inherit;
             font-size: 12px;
             padding: 8px 10px;
@@ -244,6 +343,10 @@
             flex-shrink: 0;
         }
 
+        .theme-light .menu-item .lucide-icon {
+            filter: invert(20%);
+        }
+
         .menu-item:hover .lucide-icon {
             opacity: 1;
         }
@@ -255,15 +358,19 @@
             background: rgba(255, 255, 255, 0.06);
             padding: 2px 6px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid var(--border-color);
             margin-left: auto;
             white-space: nowrap;
-            color: rgba(235, 240, 255, 0.7);
+            color: var(--text-secondary);
         }
 
         .menu-item:hover {
             background: rgba(255, 255, 255, 0.07);
-            color: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+        }
+
+        .theme-light .menu-item:hover {
+            background: rgba(0, 0, 0, 0.05);
         }
 
         .menu-item:active {
@@ -274,6 +381,11 @@
             outline: none;
             background: rgba(255, 255, 255, 0.08);
             box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.10);
+        }
+
+        .theme-light .menu-item:focus-visible {
+            background: rgba(0, 0, 0, 0.05);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
         }
 
         .menu-item:disabled {
@@ -295,6 +407,10 @@
             height: 1px;
             background: rgba(255, 255, 255, 0.10);
             margin: 6px 6px;
+        }
+
+        .theme-light .menu-divider {
+            background: rgba(0, 0, 0, 0.10);
         }
 
         .menu-container {
@@ -319,10 +435,14 @@
             max-width: calc(100vw - 24px);
             padding: 6px;
             border-radius: 10px;
-            background: rgba(14, 17, 24, 0.80);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: var(--search-bg);
+            border: 1px solid var(--border-color);
             backdrop-filter: blur(10px);
             box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+        }
+
+        .theme-light #search-panel {
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
         }
 
         #search-panel,
@@ -335,17 +455,25 @@
             min-width: 156px;
             height: 26px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid var(--border-color);
             background: rgba(255, 255, 255, 0.06);
-            color: rgba(235, 240, 255, 0.92);
+            color: var(--text-primary);
             padding: 0 8px;
             outline: none;
             font-size: 12px;
         }
 
+        .theme-light #search-panel .search-input {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
         #search-panel .search-input:focus {
-            border-color: rgba(255, 255, 255, 0.26);
+            border-color: var(--border-hover);
             background: rgba(255, 255, 255, 0.08);
+        }
+
+        .theme-light #search-panel .search-input:focus {
+            background: rgba(0, 0, 0, 0.08);
         }
 
         #search-panel .search-btn {
@@ -353,9 +481,9 @@
             height: 26px;
             padding: 0 8px;
             border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            border: 1px solid var(--border-color);
             background: rgba(255, 255, 255, 0.06);
-            color: rgba(235, 240, 255, 0.9);
+            color: var(--text-primary);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -363,9 +491,17 @@
             white-space: nowrap;
         }
 
+        .theme-light #search-panel .search-btn {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
         #search-panel .search-btn:hover {
             background: rgba(255, 255, 255, 0.09);
-            border-color: rgba(255, 255, 255, 0.22);
+            border-color: var(--border-hover);
+        }
+
+        .theme-light #search-panel .search-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
         }
 
         #search-panel .search-btn:not(.search-inline-btn):active {
@@ -453,6 +589,10 @@
             filter: invert(92%);
         }
 
+        .theme-light #search-panel .lucide-icon {
+            filter: invert(20%);
+        }
+
         #search-panel .search-btn:hover .lucide-icon {
             opacity: 1;
         }
@@ -464,7 +604,7 @@
         #search-panel .search-count {
             min-width: 34px;
             text-align: center;
-            color: rgba(235, 240, 255, 0.7);
+            color: var(--text-secondary);
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
             font-size: 12px;
         }
@@ -473,240 +613,84 @@
             display: none !important;
         }
 
-        #help-modal.hidden, #api-help-modal.hidden, #export-modal.hidden, #import-modal.hidden, #about-modal.hidden {
-            display: none;
+        .modal.hidden,
+        .modal.hidden * {
+            display: none !important;
         }
 
-        #help-modal, #api-help-modal, #export-modal, #import-modal, #about-modal {
+        .modal {
             position: fixed;
             inset: 0;
             z-index: 10000;
         }
 
-        #help-modal ::-webkit-scrollbar,
-        #api-help-modal ::-webkit-scrollbar,
-        #export-modal ::-webkit-scrollbar,
-        #import-modal ::-webkit-scrollbar,
-        #about-modal ::-webkit-scrollbar,
+        .modal ::-webkit-scrollbar,
         textarea::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
 
-        #help-modal ::-webkit-scrollbar-track,
-        #api-help-modal ::-webkit-scrollbar-track,
-        #export-modal ::-webkit-scrollbar-track,
-        #import-modal ::-webkit-scrollbar-track,
-        #about-modal ::-webkit-scrollbar-track,
+        .modal ::-webkit-scrollbar-track,
         textarea::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.06);
             border-radius: 3px;
         }
 
-        #help-modal ::-webkit-scrollbar-thumb,
-        #api-help-modal ::-webkit-scrollbar-thumb,
-        #export-modal ::-webkit-scrollbar-thumb,
-        #import-modal ::-webkit-scrollbar-thumb,
-        #about-modal ::-webkit-scrollbar-thumb,
+        .modal ::-webkit-scrollbar-thumb,
         textarea::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.25);
             border-radius: 3px;
         }
 
-        #help-modal ::-webkit-scrollbar-thumb:hover,
-        #api-help-modal ::-webkit-scrollbar-thumb:hover,
-        #export-modal ::-webkit-scrollbar-thumb:hover,
-        #import-modal ::-webkit-scrollbar-thumb:hover,
-        #about-modal ::-webkit-scrollbar-thumb:hover,
+        .modal ::-webkit-scrollbar-thumb:hover,
         textarea::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.4);
         }
 
-        #help-modal ::-webkit-scrollbar-corner,
-        #api-help-modal ::-webkit-scrollbar-corner,
-        #export-modal ::-webkit-scrollbar-corner,
-        #import-modal ::-webkit-scrollbar-corner,
-        #about-modal ::-webkit-scrollbar-corner,
+        .modal ::-webkit-scrollbar-corner,
         textarea::-webkit-scrollbar-corner {
             background: transparent;
         }
 
-        #help-modal,
-        #api-help-modal,
-        #export-modal,
-        #import-modal,
-        #about-modal,
+        .theme-light .modal ::-webkit-scrollbar-track,
+        .theme-light textarea::-webkit-scrollbar-track,
+        .theme-light #import-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .theme-light .modal ::-webkit-scrollbar-thumb,
+        .theme-light textarea::-webkit-scrollbar-thumb,
+        .theme-light #import-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 3px;
+        }
+
+        .theme-light .modal ::-webkit-scrollbar-thumb:hover,
+        .theme-light textarea::-webkit-scrollbar-thumb:hover,
+        .theme-light #import-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .theme-light .modal,
+        .theme-light textarea {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.08);
+        }
+
+        .modal,
         textarea {
             scrollbar-width: thin;
             scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.06);
         }
 
-        #export-modal .modal-backdrop {
+        .modal .modal-backdrop {
             position: absolute;
             inset: 0;
             background: rgba(0, 0, 0, 0.55);
             backdrop-filter: blur(4px);
         }
 
-        #export-modal .modal-card {
-            position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(760px, calc(100vw - 24px));
-            max-height: calc(100vh - 110px);
-            overflow: auto;
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.82);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-            color: rgba(255, 255, 255, 0.92);
-        }
-
-        #export-modal .modal-header {
-            position: sticky;
-            top: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 12px 14px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        #export-modal .modal-title {
-            font-family: monospace;
-            font-size: 13px;
-            color: #00ff88;
-            font-weight: 700;
-        }
-
-        #export-modal .modal-close {
-            appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.9);
-            font-family: monospace;
-            font-size: 0;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 0;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-
-        #export-modal .modal-close .lucide-icon {
-            width: 16px;
-            height: 16px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        #export-modal .modal-close:hover .lucide-icon {
-            opacity: 1;
-        }
-
-        #export-modal .modal-body {
-            padding: 14px;
-            font-family: monospace;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        #import-modal .modal-backdrop {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(4px);
-        }
-
-        #import-modal .modal-card {
-            position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(760px, calc(100vw - 24px));
-            max-height: calc(100vh - 110px);
-            overflow: auto;
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.82);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-            color: rgba(255, 255, 255, 0.92);
-        }
-
-        #import-modal .modal-header {
-            position: sticky;
-            top: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 12px 14px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        #import-modal .modal-title {
-            font-family: monospace;
-            font-size: 13px;
-            color: #00ff88;
-            font-weight: 700;
-        }
-
-        #import-modal .modal-close {
-            appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.9);
-            font-family: monospace;
-            font-size: 0;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 0;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-
-        #import-modal .modal-close .lucide-icon {
-            width: 16px;
-            height: 16px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        #import-modal .modal-close:hover .lucide-icon {
-            opacity: 1;
-        }
-
-        #import-modal .modal-body {
-            padding: 14px;
-            font-family: monospace;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        #help-modal .modal-backdrop, #api-help-modal .modal-backdrop {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(4px);
-        }
-
-        #help-modal .modal-card, #api-help-modal .modal-card {
+        .modal .modal-card {
             position: absolute;
             top: 70px;
             left: 50%;
@@ -716,15 +700,13 @@
             display: flex;
             flex-direction: column;
             border-radius: 12px;
-            background: rgba(0, 0, 0, 0.82);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-            color: rgba(255, 255, 255, 0.92);
+            color: var(--text-primary);
         }
 
-        #help-modal .modal-header, #api-help-modal .modal-header {
-            position: sticky;
-            top: 0;
+        .modal .modal-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -732,21 +714,96 @@
             padding: 12px 14px;
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            border-radius: 12px 12px 0 0;
         }
 
-        #help-modal .modal-title, #api-help-modal .modal-title {
+        .theme-light .modal .modal-card {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .theme-light .modal .modal-header {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .theme-light .modal .modal-body {
+            color: var(--text-primary);
+        }
+
+        .modal-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.10);
+            margin: 4px 0;
+        }
+
+        .theme-light .modal-divider {
+            background: rgba(0, 0, 0, 0.10);
+        }
+
+        .modal-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .modal-select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .theme-light .modal-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .modal-input {
+            width: calc(100% - 20px);
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .modal-textarea {
+            width: calc(100% - 24px);
+            height: 300px;
+            padding: 12px;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            resize: vertical;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .modal .modal-title {
             font-family: monospace;
             font-size: 13px;
-            color: #00ff88;
+            color: var(--accent-color);
             font-weight: 700;
         }
 
-        #help-modal .modal-close, #api-help-modal .modal-close {
+        .modal .modal-close {
             appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            border: 1px solid var(--border-color);
             background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--text-primary);
             font-family: monospace;
             font-size: 0;
             padding: 0;
@@ -760,7 +817,7 @@
             cursor: pointer;
         }
 
-        #help-modal .modal-close .lucide-icon, #api-help-modal .modal-close .lucide-icon {
+        .modal .modal-close .lucide-icon {
             width: 16px;
             height: 16px;
             display: block;
@@ -768,11 +825,24 @@
             filter: invert(92%);
         }
 
-        #help-modal .modal-close:hover .lucide-icon {
+        .theme-light .modal .modal-close {
+            background: rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 0, 0, 0.15);
+        }
+
+        .theme-light .modal .modal-close:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        .theme-light .modal .modal-close .lucide-icon {
+            filter: invert(10%);
+        }
+
+        .modal .modal-close:hover .lucide-icon {
             opacity: 1;
         }
 
-        #help-modal .modal-body, #api-help-modal .modal-body {
+        .modal .modal-body {
             padding: 14px;
             font-family: monospace;
             font-size: 12px;
@@ -781,99 +851,28 @@
             flex: 1;
         }
 
-        #help-modal .help-section-title, #api-help-modal .help-section-title {
+
+        .modal .help-section-title {
             margin: 10px 0 6px;
-            color: rgba(255, 255, 255, 0.85);
+            color: var(--text-primary);
             font-weight: 700;
         }
 
-        #help-modal .help-list, #api-help-modal .help-list {
+        .modal .help-list {
             margin: 0;
             padding-left: 18px;
-            color: rgba(255, 255, 255, 0.78);
-        }
-
-        #about-modal .modal-backdrop {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(4px);
-        }
-
-        #about-modal .modal-card {
-            position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(760px, calc(100vw - 24px));
-            max-height: calc(100vh - 110px);
-            overflow: auto;
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.82);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-            color: rgba(255, 255, 255, 0.92);
-        }
-
-        #about-modal .modal-header {
-            position: sticky;
-            top: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 12px 14px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-        }
-
-        #about-modal .modal-title {
-            font-family: monospace;
-            font-size: 13px;
-            color: #00ff88;
-            font-weight: 700;
-        }
-
-        #about-modal .modal-close {
-            appearance: none;
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.9);
-            font-family: monospace;
-            font-size: 0;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 0;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-
-        #about-modal .modal-close .lucide-icon {
-            width: 16px;
-            height: 16px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        #about-modal .modal-close:hover .lucide-icon {
-            opacity: 1;
+            color: var(--text-secondary);
         }
 
         #about-modal .modal-body {
             padding: 14px;
             font-size: 13px;
             line-height: 1.75;
-            color: rgba(255, 255, 255, 0.86);
+            color: var(--text-primary);
         }
 
         #about-modal a {
-            color: #4ea1ff;
+            color: var(--link-color);
             text-decoration: none;
         }
 
@@ -912,6 +911,12 @@
             cursor: crosshair;
         }
 
+        .theme-light #minimap {
+            background: rgba(241, 245, 249, 0.9);
+            border-color: rgba(0, 0, 0, 0.12);
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.2);
+        }
+
         #minimap canvas {
             width: 100%;
             height: 100%;
@@ -922,6 +927,11 @@
             border: 2px solid rgba(0, 255, 136, 0.85);
             background: rgba(0, 255, 136, 0.08);
             pointer-events: none;
+        }
+
+        .theme-light #minimap .viewport-rect {
+            border-color: rgba(0, 200, 83, 0.85);
+            background: rgba(0, 200, 83, 0.08);
         }
 
         #minimap .minimap-label {
@@ -944,6 +954,12 @@
             gap: 4px;
         }
 
+        .theme-light #zoom-control {
+            background: rgba(241, 245, 249, 0.9);
+            border-color: rgba(0, 0, 0, 0.12);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+
         #zoom-control .zoom-btn {
             width: 28px;
             height: 28px;
@@ -957,8 +973,16 @@
             transition: all 0.2s;
         }
 
+        .theme-light #zoom-control .zoom-btn {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
         #zoom-control .zoom-btn:hover {
             background: rgba(255, 255, 255, 0.12);
+        }
+
+        .theme-light #zoom-control .zoom-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
         }
 
         #zoom-control .zoom-btn:active {
@@ -972,6 +996,10 @@
             filter: invert(92%);
         }
 
+        .theme-light #zoom-control .zoom-btn .lucide-icon {
+            filter: invert(20%);
+        }
+
         #zoom-control .zoom-value {
             font-size: 11px;
             color: #00ff88;
@@ -979,6 +1007,10 @@
             font-weight: bold;
             min-width: 40px;
             text-align: center;
+        }
+
+        .theme-light #zoom-control .zoom-value {
+            color: #00c853;
         }
     </style>
 </head>
@@ -1029,6 +1061,7 @@
                 <img class="lucide-icon menu-caret" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/chevron-down.svg" />
             </button>
             <div class="menu-dropdown" id="view-menu">
+                <button class="menu-item" id="theme-toggle-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/sun.svg" /><span>切换主题</span></button>
                 <button class="menu-item" id="go-root-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/home.svg" /><span>回到根节点</span><span class="shortcut">Home</span></button>
                 <div class="menu-divider"></div>
                 <button class="menu-item" id="collapse-all-btn"><img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/shrink.svg" /><span>折叠所有</span></button>
@@ -1125,7 +1158,7 @@
             </button>
         </div>
     </div>
-    <div id="help-modal" class="hidden" role="dialog" aria-modal="true">
+    <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1160,13 +1193,14 @@
                     <li>Ctrl+V：将文本粘贴为当前节点的子节点（支持`包裹的多行节点）</li>
                     <li>Ctrl+Z：撤销（节点增删/改名/粘贴）</li>
                     <li>Ctrl+Y：重做</li>
+                    <li>Ctrl+0：重置到 100% 实际大小</li>
                     <li>Esc：取消编辑</li>
                 </ul>
             </div>
         </div>
     </div>
 
-    <div id="api-help-modal" class="hidden" role="dialog" aria-modal="true">
+    <div id="api-help-modal" class="modal hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1236,7 +1270,7 @@
         </div>
     </div>
 
-    <div id="about-modal" class="hidden" role="dialog" aria-modal="true">
+    <div id="about-modal" class="modal hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1247,10 +1281,12 @@
             </div>
             <div class="modal-body">
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">版本号：</span><span style="font-family:monospace;">v0.7</span></div>
-                    <div><span style="color:rgba(255,255,255,0.72);font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
-                    <div style="height:1px;background:rgba(255,255,255,0.10);margin:4px 0;"></div>
-                    <div style="color:rgba(255,255,255,0.84);">
+                    <div><span style="font-weight:700;">版本号：</span><span style="font-family:monospace;">v1.0</span></div>
+                    <div><span style="font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
+                    <div class="modal-divider"></div>
+                    <div><span style="font-weight:700;">快捷键：</span><span>Ctrl+0 重置缩放</span></div>
+                    <div class="modal-divider"></div>
+                    <div>
                         <p style="margin:0 0 10px;">
                             十年前，我基于百度脑图开发了桌面端脑图工具 <a href="https://github.com/NaoTu/DesktopNaotu" target="_blank" rel="noopener noreferrer">DesktopNaotu</a>，并开源发布，为社区贡献了一份绵薄之力。
                         </p>
@@ -1266,7 +1302,7 @@
         </div>
     </div>
 
-    <div id="export-modal" class="hidden" role="dialog" aria-modal="true">
+    <div id="export-modal" class="modal hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1278,58 +1314,28 @@
             <div class="modal-body">
                 <div style="display: flex; gap: 12px; margin-bottom: 12px;">
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 6px; color: rgba(255, 255, 255, 0.85); font-weight: 700; font-size: 11px;">导出级别</label>
-                        <select id="export-level" style="
-                            width: 100%;
-                            padding: 8px 10px;
-                            border-radius: 8px;
-                            background: #1a1a2e;
-                            border: 1px solid rgba(255, 255, 255, 0.2);
-                            color: white;
-                            font-family: monospace;
-                            font-size: 12px;
-                        ">
-                            <option value="1" style="background: #1a1a2e; color: white;">只导出1级</option>
-                            <option value="2" style="background: #1a1a2e; color: white;">导出前2级</option>
-                            <option value="3" selected style="background: #1a1a2e; color: white;">导出前3级</option>
-                            <option value="4" style="background: #1a1a2e; color: white;">导出前4级</option>
-                            <option value="5" style="background: #1a1a2e; color: white;">导出前5级</option>
-                            <option value="6" style="background: #1a1a2e; color: white;">导出前6级</option>
+                        <label class="modal-label">导出级别</label>
+                        <select id="export-level" class="modal-select">
+                            <option value="1">只导出1级</option>
+                            <option value="2">导出前2级</option>
+                            <option value="3" selected>导出前3级</option>
+                            <option value="4">导出前4级</option>
+                            <option value="5">导出前5级</option>
+                            <option value="6">导出前6级</option>
                         </select>
                     </div>
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 6px; color: rgba(255, 255, 255, 0.85); font-weight: 700; font-size: 11px;">文件名</label>
-                        <input type="text" id="export-filename" value="思维导图" style="
-                            width: calc(100% - 20px);
-                            padding: 8px 10px;
-                            border-radius: 8px;
-                            background: rgba(255, 255, 255, 0.1);
-                            border: 1px solid rgba(255, 255, 255, 0.2);
-                            color: white;
-                            font-family: monospace;
-                            font-size: 12px;
-                        ">
+                        <label class="modal-label">文件名</label>
+                        <input type="text" id="export-filename" value="思维导图" class="modal-input">
                     </div>
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="display: block; margin-bottom: 6px; color: rgba(255, 255, 255, 0.85); font-weight: 700;">预览</label>
-                    <textarea id="export-preview" readonly style="
-                        width: calc(100% - 24px);
-                        height: 300px;
-                        padding: 12px;
-                        border-radius: 8px;
-                        background: rgba(0, 0, 0, 0.4);
-                        border: 1px solid rgba(255, 255, 255, 0.15);
-                        color: rgba(255, 255, 255, 0.9);
-                        font-family: monospace;
-                        font-size: 12px;
-                        line-height: 1.5;
-                        resize: vertical;
-                        white-space: pre-wrap;
+                    <label class="modal-label">预览</label>
+                    <textarea id="export-preview" readonly class="modal-textarea">
                     "></textarea>
                 </div>
                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button id="export-copy-btn" class="topbar-btn" style="background: rgba(78, 161, 255, 0.2); border-color: rgba(78, 161, 255, 0.5); color: #4ea1ff;">
+                    <button id="export-copy-btn" class="topbar-btn" style="background: var(--accent-bg); border-color: var(--accent-border); color: var(--link-color);">
                         <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/copy.svg" />
                         <span>复制内容</span>
                     </button>
@@ -1342,7 +1348,7 @@
         </div>
     </div>
 
-    <div id="import-modal" class="hidden" role="dialog" aria-modal="true">
+    <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1353,40 +1359,19 @@
             </div>
             <div class="modal-body">
                 <div style="margin-bottom: 12px;">
-                    <label style="display: block; margin-bottom: 6px; color: rgba(255, 255, 255, 0.85); font-weight: 700; font-size: 11px;">导入级别</label>
-                    <select id="import-level" style="
-                        width: 100%;
-                        padding: 8px 10px;
-                        border-radius: 8px;
-                        background: #1a1a2e;
-                        border: 1px solid rgba(255, 255, 255, 0.2);
-                        color: white;
-                        font-family: monospace;
-                        font-size: 12px;
-                    ">
-                        <option value="1" style="background: #1a1a2e; color: white;">只导入1级</option>
-                        <option value="2" style="background: #1a1a2e; color: white;">导入前2级</option>
-                        <option value="3" style="background: #1a1a2e; color: white;">导入前3级</option>
-                        <option value="4" selected style="background: #1a1a2e; color: white;">导入前4级</option>
-                        <option value="5" style="background: #1a1a2e; color: white;">导入前5级</option>
-                        <option value="6" style="background: #1a1a2e; color: white;">导入前6级</option>
+                    <label class="modal-label">导入级别</label>
+                    <select id="import-level" class="modal-select">
+                        <option value="1">只导入1级</option>
+                        <option value="2">导入前2级</option>
+                        <option value="3">导入前3级</option>
+                        <option value="4" selected>导入前4级</option>
+                        <option value="5">导入前5级</option>
+                        <option value="6">导入前6级</option>
                     </select>
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="display: block; margin-bottom: 6px; color: rgba(255, 255, 255, 0.85); font-weight: 700;">Markdown内容</label>
-                    <textarea id="import-content" placeholder="粘贴Markdown内容..." style="
-                        width: calc(100% - 24px);
-                        height: 300px;
-                        padding: 12px;
-                        border-radius: 8px;
-                        background: rgba(0, 0, 0, 0.4);
-                        border: 1px solid rgba(255, 255, 255, 0.15);
-                        color: rgba(255, 255, 255, 0.9);
-                        font-family: monospace;
-                        font-size: 12px;
-                        line-height: 1.5;
-                        resize: vertical;
-                    "></textarea>
+                    <label class="modal-label">Markdown内容</label>
+                    <textarea id="import-content" placeholder="粘贴Markdown内容..." class="modal-textarea"></textarea>
                 </div>
                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
                     <button id="import-cancel-btn" class="topbar-btn" style="background: rgba(255, 102, 102, 0.2); border-color: rgba(255, 102, 102, 0.5); color: #ff6666;">
@@ -1409,9 +1394,45 @@
     <script>
         // 等待 DOM 加载完成
         (async function () {
-            // ========== 1. 初始化 PixiJS 应用 ==========
+            // ========== 0. 工具函数：从CSS变量读取颜色 ==========
+            function getCssColor(name, asString = false) {
+                const style = getComputedStyle(document.documentElement);
+                const colorStr = style.getPropertyValue(name).trim();
+                if (!colorStr) return asString ? '#000000' : 0x000000;
+                
+                if (colorStr.startsWith('#')) {
+                    const hex = colorStr.slice(1).padEnd(6, '0').slice(0, 6);
+                    return asString ? '#' + hex : parseInt(hex, 16);
+                }
+                if (colorStr.startsWith('rgb')) {
+                    const match = colorStr.match(/\d+/g);
+                    if (match && match.length >= 3) {
+                        const r = parseInt(match[0]) || 0;
+                        const g = parseInt(match[1]) || 0;
+                        const b = parseInt(match[2]) || 0;
+                        if (asString) {
+                            return '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
+                        }
+                        return (r << 16) | (g << 8) | b;
+                    }
+                }
+                return asString ? '#000000' : 0x000000;
+            }
+
+            // ========== 1. 先加载主题（确保CSS变量正确应用）==========
+            const loadTheme = () => {
+                let savedTheme = null;
+                try { savedTheme = localStorage.getItem('mm_theme'); } catch (e) {}
+                const isDark = savedTheme === 'dark' || (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('theme-light', !isDark);
+                return isDark;
+            };
+
+            loadTheme();
+
+            // ========== 2. 初始化 PixiJS 应用 ==========
             const app = new PIXI.Application({
-                background: 0x0d1117,
+                background: getCssColor('--canvas-bg'),
                 resizeTo: window,
                 antialias: true,
                 resolution: 1,
@@ -1433,6 +1454,12 @@
             };
             applyPanelHiddenState('minimap', 'mm_minimap_hidden');
             applyPanelHiddenState('zoom-control', 'mm_zoom_hidden');
+
+            const toggleTheme = () => {
+                const isLight = document.documentElement.classList.toggle('theme-light');
+                try { localStorage.setItem('mm_theme', isLight ? 'light' : 'dark'); } catch (e) {}
+                refreshView();
+            };
 
             const runtimeErrEl = document.createElement('div');
             runtimeErrEl.style.cssText = 'position:fixed;left:8px;bottom:8px;max-width:60vw;max-height:40vh;overflow:auto;z-index:999999;background:rgba(0,0,0,0.72);color:#ff6666;padding:8px 10px;border-radius:8px;font:12px/1.4 monospace;display:none;white-space:pre-wrap;pointer-events:auto;';
@@ -1747,7 +1774,6 @@
                 for (const c of node.children) updateLevelsRec(c, level + 1);
             }
 
-            const HOVER_FRAME_COLOR = 0x8aa0d6;
             const HOVER_FRAME_ALPHA = 0.85;
             const HOVER_FRAME_WIDTH = 2;
             const HOVER_FRAME_PAD = 6;
@@ -1759,8 +1785,9 @@
                 const w = cont._nodeData.width || 0;
                 const h = cont._nodeData.height || 0;
                 const pad = cont._nodeData.hoverFramePad ?? HOVER_FRAME_PAD;
+                const hoverColor = getCssColor('--hover-color');
                 frame.clear();
-                frame.lineStyle(HOVER_FRAME_WIDTH, HOVER_FRAME_COLOR, HOVER_FRAME_ALPHA);
+                frame.lineStyle(HOVER_FRAME_WIDTH, hoverColor, HOVER_FRAME_ALPHA);
                 frame.drawRect(-pad, -pad, w + pad * 2, h + pad * 2);
             }
 
@@ -1788,19 +1815,16 @@
 
                     const bg = cont._nodeData.bg;
                     bg.clear();
+                    bg.beginFill(style.bgColor);
+                    bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
+                    bg.endFill();
                     if (selectedNodeIds.has(node.id)) {
-                        bg.beginFill(style.bgColor + 0x333333);
-                        bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
-                        bg.endFill();
-                        bg.lineStyle(3, 0x00ff88, 1);
-                        bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
+                        const selectedBorderColor = getCssColor('--node-selected-border');
+                        bg.lineStyle(3, selectedBorderColor, 1);
                     } else {
-                        bg.beginFill(style.bgColor);
-                        bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
-                        bg.endFill();
                         bg.lineStyle(1.5, style.borderColor, 0.8);
-                        bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
                     }
+                    bg.drawRoundedRect(0, 0, measured.width, measured.height, style.radius);
                     cont.pivot.set(measured.width / 2, measured.height / 2);
                     updateHoverFrameForContainer(cont);
                 }
@@ -1924,8 +1948,9 @@
                 const draggedCont = nodeGraphics.get(nodeDnd.draggedId);
                 const ghostW = draggedCont && draggedCont._nodeData ? draggedCont._nodeData.width : (nodeDnd.draggedNode._width || 140);
                 const ghostH = draggedCont && draggedCont._nodeData ? draggedCont._nodeData.height : (nodeDnd.draggedNode._height || 40);
-                dndGhostGraphics.lineStyle(2, 0xffffff, 0.7);
-                dndGhostGraphics.beginFill(0xffffff, 0.12);
+                const ghostColor = getCssColor('--text-primary');
+                dndGhostGraphics.lineStyle(2, ghostColor, 0.7);
+                dndGhostGraphics.beginFill(ghostColor, 0.12);
                 dndGhostGraphics.drawRoundedRect(localPoint.x - ghostW / 2, localPoint.y - ghostH / 2, ghostW, ghostH, 10);
                 dndGhostGraphics.endFill();
 
@@ -1938,15 +1963,17 @@
                 const h = targetCont._nodeData.height;
 
                 if (cand.mode === 'into') {
-                    dndPreviewGraphics.lineStyle(3, 0x4ea1ff, 1);
-                    dndPreviewGraphics.beginFill(0x4ea1ff, 0.08);
+                    const linkColor = getCssColor('--link-color');
+                    dndPreviewGraphics.lineStyle(3, linkColor, 1);
+                    dndPreviewGraphics.beginFill(linkColor, 0.08);
                     dndPreviewGraphics.drawRoundedRect(targetCont.x - w / 2 - 6, targetCont.y - h / 2 - 6, w + 12, h + 12, 12);
                     dndPreviewGraphics.endFill();
                 } else {
                     const y = targetCont.y + (cand.mode === 'before' ? -h / 2 : h / 2);
                     const x1 = targetCont.x - w / 2 - 18;
                     const x2 = targetCont.x + w / 2 + 18;
-                    dndPreviewGraphics.lineStyle(4, 0xffa24a, 1);
+                    const warningColor = getCssColor('--warning-color');
+                    dndPreviewGraphics.lineStyle(4, warningColor, 1);
                     dndPreviewGraphics.moveTo(x1, y);
                     dndPreviewGraphics.lineTo(x2, y);
                 }
@@ -2453,17 +2480,12 @@
                     bg.beginFill(style.bgColor);
                     bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
                     bg.endFill();
-                    bg.lineStyle(1.5, style.borderColor, 0.8);
-                    bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
-
                     if (selectedNodeIds && selectedNodeIds.has(node.id)) {
-                        bg.clear();
-                        bg.beginFill(style.bgColor + 0x333333);
-                        bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
-                        bg.endFill();
-                        bg.lineStyle(3, 0x00ff88, 1);
-                        bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
+                        bg.lineStyle(3, getCssColor('--node-selected-border'), 1);
+                    } else {
+                        bg.lineStyle(1.5, style.borderColor, 0.8);
                     }
+                    bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
 
                     containerItem.pivot.set(newWidth / 2, newHeight / 2);
                     updateHoverFrameForContainer(containerItem);
@@ -2530,10 +2552,10 @@
                     const bg = nodeData.bg;
                     const style = nodeData.style;
                     bg.clear();
-                    bg.beginFill(style.bgColor + 0x333333);
+                    bg.beginFill(style.bgColor);
                     bg.drawRoundedRect(0, 0, nodeData.width, nodeData.height, style.radius);
                     bg.endFill();
-                    bg.lineStyle(3, 0x00ff88, 1);
+                    bg.lineStyle(3, getCssColor('--node-selected-border'), 1);
                     bg.drawRoundedRect(0, 0, nodeData.width, nodeData.height, style.radius);
                     selectedNodes.add(node);
                     if (nodeData && nodeData.nodeId !== undefined && nodeData.nodeId !== null) {
@@ -2568,9 +2590,10 @@
                 const y = Math.min(selectionStart.y, selectionRect.y);
                 const w = Math.abs(selectionRect.x - selectionStart.x);
                 const h = Math.abs(selectionRect.y - selectionStart.y);
-                
-                selectionGraphics.lineStyle(2, 0x00ff88, 0.8);
-                selectionGraphics.beginFill(0x00ff88, 0.1);
+                const accentColor = getCssColor('--accent-color');
+
+                selectionGraphics.lineStyle(2, accentColor, 0.8);
+                selectionGraphics.beginFill(accentColor, 0.1);
                 selectionGraphics.drawRect(x, y, w, h);
                 selectionGraphics.endFill();
             }
@@ -3068,18 +3091,12 @@
                 bg.beginFill(style.bgColor);
                 bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
                 bg.endFill();
-                bg.lineStyle(1.5, style.borderColor, 0.8);
-                bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
-
                 if (selectedNodeIds && selectedNodeIds.has(nodeId)) {
-                    bg.clear();
-                    bg.beginFill(style.bgColor + 0x333333);
-                    bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
-                    bg.endFill();
-                    bg.lineStyle(3, 0x00ff88, 1);
-                    bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
+                    bg.lineStyle(3, getCssColor('--node-selected-border'), 1);
+                } else {
+                    bg.lineStyle(1.5, style.borderColor, 0.8);
                 }
-
+                bg.drawRoundedRect(0, 0, newWidth, newHeight, style.radius);
                 cont.pivot.set(newWidth / 2, newHeight / 2);
                 updateHoverFrameForContainer(cont);
 
@@ -3726,6 +3743,13 @@
                 if (e.ctrlKey && (e.key === 'y' || e.key === 'Y')) {
                     e.preventDefault();
                     redo();
+                    return;
+                }
+
+                if (e.ctrlKey && e.key === '0') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (zoomResetBtn) zoomResetBtn.click();
                     return;
                 }
 
@@ -4488,14 +4512,17 @@
                     }
                 }
 
+                const dpr = app.renderer.resolution || 1;
+                const snap = (v) => Math.round(v * dpr) / dpr;
+                
                 for (const n of nodesList) {
                     const nodeCont = nodeGraphics.get(n.id);
                     if (nodeCont) {
                         const isVisible = visibleIds.has(n.id);
                         nodeCont.visible = isVisible;
                         if (isVisible) {
-                            nodeCont.x = n.x;
-                            nodeCont.y = n.y;
+                            nodeCont.x = snap(n.x);
+                            nodeCont.y = snap(n.y);
                         }
                     }
                     const span = domNodeById.get(n.id);
@@ -4580,16 +4607,31 @@
                 return totalScale * scaleToClientX;
             }
 
-            const styles = {
-                root: { bgColor: 0x6c5ce7, textColor: '#ffffff', borderColor: 0xa29bfe, fontSize: 26, paddingX: 20, paddingY: 10, radius: 24, fontWeight: 'bold' },
-                level1: { bgColor: 0x4a4e69, textColor: '#f0f0f0', borderColor: 0x6c6f8d, fontSize: 18, paddingX: 18, paddingY: 9, radius: 20, fontWeight: 'normal' },
-                default: { bgColor: 0x2d2f4a, textColor: '#d4d4d8', borderColor: 0x494b66, fontSize: 14, paddingX: 12, paddingY: 6, radius: 16, fontWeight: 'normal' }
-            };
-
             function getStyleForLevel(level, isRoot = false) {
-                if (isRoot) return styles.root;
-                if (level === 1) return styles.level1;
-                return styles.default;
+                let bgColor, textColor, borderColor;
+                if (isRoot) {
+                    bgColor = getCssColor('--node-root-bg');
+                    borderColor = getCssColor('--node-root-border');
+                    textColor = getCssColor('--node-root-text', true);
+                } else if (level === 1) {
+                    bgColor = getCssColor('--node-level1-bg');
+                    borderColor = getCssColor('--node-level1-border');
+                    textColor = getCssColor('--node-level1-text', true);
+                } else {
+                    bgColor = getCssColor('--node-default-bg');
+                    borderColor = getCssColor('--node-default-border');
+                    textColor = getCssColor('--node-default-text', true);
+                }
+                return {
+                    bgColor,
+                    textColor,
+                    borderColor,
+                    fontSize: isRoot ? 26 : (level === 1 ? 18 : 14),
+                    paddingX: isRoot ? 20 : (level === 1 ? 18 : 12),
+                    paddingY: isRoot ? 10 : (level === 1 ? 9 : 6),
+                    radius: isRoot ? 24 : (level === 1 ? 20 : 16),
+                    fontWeight: isRoot ? 'bold' : 'normal'
+                };
             }
 
             function hexColor(color) {
@@ -4610,17 +4652,19 @@
                 const label = badge._collapse.label;
                 const isCollapsed = !!node.collapsed;
                 const text = isCollapsed ? String(countDescendants(node)) : '−';
-                const strokeColor = 0x8aa0d6;
+                const strokeColor = getCssColor('--hover-color');
                 const strokeAlpha = 0.9;
-                const fillColor = 0x0d1117;
+                const fillColor = getCssColor('--canvas-bg');
                 const fillAlpha = isCollapsed ? 0.42 : 0.30;
+                const textColor = getCssColor('--text-primary', true);
 
                 gfx.clear();
-                gfx.lineStyle(2, strokeColor, strokeAlpha);
+                gfx.lineStyle(1, strokeColor, strokeAlpha);
                 gfx.beginFill(fillColor, fillAlpha);
                 gfx.drawCircle(0, 0, r);
                 gfx.endFill();
 
+                label.style.fill = textColor;
                 label.text = text;
                 label.x = 0;
                 label.y = 0;
@@ -4646,8 +4690,8 @@
                 const label = new PIXI.Text('', new PIXI.TextStyle({
                     fontFamily: 'Segoe UI, "PingFang SC", Roboto, "Helvetica Neue", sans-serif',
                     fontSize: 12,
-                    fill: 0xd7e0ff,
-                    fontWeight: 'bold',
+                    fill: getCssColor('--text-primary', true),
+                    fontWeight: 'normal',
                     align: 'center'
                 }));
                 label.anchor.set(0.5);
@@ -4861,7 +4905,9 @@
                         span.style.display = 'none';
                         continue;
                     }
-                    if (span.style.display === 'none') span.style.display = '';
+                    
+                    const wasHidden = span.style.display === 'none';
+                    if (wasHidden) span.style.display = '';
 
                     const screenX = translateX + pixiNode.x * nodeScaleX;
                     const screenY = translateY + pixiNode.y * nodeScaleY;
@@ -4880,7 +4926,7 @@
                         span.style.top = `${ty}px`;
                     }
 
-                    if (scaleChanged) {
+                    if (scaleChanged || wasHidden) {
                         span.style.fontSize = `${snap(span._baseFontSize * textScale)}px`;
                         span.style.lineHeight = `${snap(span._baseFontSize * 1.4 * textScale)}px`;
                         span.style.maxWidth = `${snap(span._maxWidth * textScale)}px`;
@@ -5024,16 +5070,24 @@
                 const toWidth = toGraphic ? toGraphic._nodeData.width : 0;
                 
                 const isRoot = fromNode.parentId === null;
-                const offset = isRoot ? 80 : 0;
+                const offset = isRoot ? 80 : 20;
                 
-                const startX = fromNode.x + fromWidth / 2 - offset;
-                const startY = fromNode.y;
-                const endX = toNode.x - toWidth / 2;
-                const endY = toNode.y;
+                let startX = fromNode.x + fromWidth / 2 - offset;
+                let startY = fromNode.y;
+                let endX = toNode.x - toWidth / 2;
+                let endY = toNode.y;
                 
-                const cp1x = startX + (endX - startX) * 0.5;
+                const dpr = app.renderer.resolution || 1;
+                const snap = (v) => Math.round(v * dpr) / dpr;
+                
+                startX = snap(startX);
+                startY = snap(startY);
+                endX = snap(endX);
+                endY = snap(endY);
+                
+                const cp1x = snap(startX + (endX - startX) * 0.5);
                 const cp1y = startY;
-                const cp2x = endX - (endX - startX) * 0.5;
+                const cp2x = snap(endX - (endX - startX) * 0.5);
                 const cp2y = endY;
                 
                 linesGraphics.moveTo(startX, startY);
@@ -5043,6 +5097,7 @@
             function redrawAllLines() {
                 linesGraphics.clear();
                 const nodeById = buildNodeByIdMap();
+                const lineColor = getCssColor('--line-color');
 
                 for (const node of nodesList) {
                     if (node._visible === false) continue;
@@ -5050,7 +5105,7 @@
                         const parent = nodeById.get(node.parentId);
                         if (parent && parent._visible !== false && !parent.collapsed) {
                             const lineWidth = parent.level === 0 ? 4 : 2;
-                            linesGraphics.lineStyle({ width: lineWidth, color: 0x4a5b8c, alpha: 0.7, cap: 'round', join: 'round' });
+                            linesGraphics.lineStyle({ width: lineWidth, color: lineColor, alpha: 0.7, cap: 'round', join: 'round' });
                             drawCurve(parent, node);
                         }
                     }
@@ -5074,6 +5129,7 @@
             const toggleZoomBtn = document.getElementById('toggle-zoom-btn');
             const toggleMinimapBtn = document.getElementById('toggle-minimap-btn');
             const toggleStatsBtn = document.getElementById('toggle-stats-btn');
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
             const undoBtn = document.getElementById('undo-btn');
             const redoBtn = document.getElementById('redo-btn');
             const addChildBtn = document.getElementById('add-child-btn');
@@ -5726,6 +5782,12 @@
                 });
             }
 
+            if (themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', () => {
+                    toggleTheme();
+                });
+            }
+
             if (undoBtn) undoBtn.addEventListener('click', undo);
             if (redoBtn) redoBtn.addEventListener('click', redo);
             updateUndoRedoButtons();
@@ -5794,8 +5856,77 @@
             function refreshView() {
                 relayoutAll();
                 redrawAllLines();
+                updateNodeStylesForTheme();
                 minimapDirty = true;
                 domNeedsUpdate = true;
+            }
+
+            function updateNodeStylesForTheme() {
+                const bgColor = getCssColor('--canvas-bg');
+                app.renderer.backgroundColor = bgColor;
+
+                nodeGraphics.forEach((containerItem) => {
+                    const nodeData = containerItem._nodeData;
+                    if (!nodeData) return;
+
+                    const node = nodesList.find(n => n.id === nodeData.nodeId);
+                    if (!node) return;
+
+                    const isRoot = node.parentId === null;
+                    const style = getStyleForLevel(node.level, isRoot);
+
+                    const bg = nodeData.bg;
+                    const bgWidth = nodeData.width;
+                    const bgHeight = nodeData.height;
+
+                    bg.clear();
+                    bg.beginFill(style.bgColor);
+                    bg.drawRoundedRect(0, 0, bgWidth, bgHeight, style.radius);
+                    bg.endFill();
+                    bg.lineStyle(1.5, style.borderColor, 0.8);
+                    bg.drawRoundedRect(0, 0, bgWidth, bgHeight, style.radius);
+
+                    nodeData.style = style;
+                    updateHoverFrameForContainer(containerItem);
+
+                    // 更新文字颜色
+                    const span = domNodeById.get(node.id);
+                    if (span) {
+                        span.style.color = style.textColor;
+                    }
+                });
+
+                updateAllCollapseBadgesForTheme();
+            }
+
+            function updateAllCollapseBadgesForTheme() {
+                const strokeColor = getCssColor('--hover-color');
+                const fillColor = getCssColor('--canvas-bg');
+                const textColor = getCssColor('--text-primary');
+
+                collapseBadgeById.forEach((badge) => {
+                    if (badge._collapse && badge._collapse.gfx) {
+                        const gfx = badge._collapse.gfx;
+                        const label = badge._collapse.label;
+                        const node = nodesList.find(n => n.id === badge._nodeId);
+                        if (!node) return;
+
+                        const r = COLLAPSE_BADGE_RADIUS;
+                        const isCollapsed = !!node.collapsed;
+                        const text = isCollapsed ? String(countDescendants(node)) : '−';
+                        const fillAlpha = isCollapsed ? 0.42 : 0.30;
+
+                        gfx.clear();
+                        gfx.lineStyle(2, strokeColor, 0.9);
+                        gfx.beginFill(fillColor, fillAlpha);
+                        gfx.drawCircle(0, 0, r);
+                        gfx.endFill();
+
+                        // 更新文字颜色
+                        label.style.fill = '#' + textColor.toString(16).padStart(6, '0');
+                        label.text = text;
+                    }
+                });
             }
 
             function updateRootNodeDisplay(rootNode) {
@@ -6493,6 +6624,10 @@
                     closeHelp();
                     return;
                 }
+                if (apiHelpModal && !apiHelpModal.classList.contains('hidden')) {
+                    closeApiHelp();
+                    return;
+                }
                 if (aboutModal && !aboutModal.classList.contains('hidden')) {
                     closeAbout();
                     return;
@@ -6592,7 +6727,10 @@
             function drawMinimap() {
                 const mmScale = getMinimapScale();
                 minimapCtx.clearRect(0, 0, minimapWidth, minimapHeight);
-                minimapCtx.fillStyle = 'rgba(13, 17, 23, 0.3)';
+                
+                const isLight = document.documentElement.classList.contains('theme-light');
+                const bgColor = isLight ? 'rgba(241, 245, 249, 0.8)' : 'rgba(13, 17, 23, 0.3)';
+                minimapCtx.fillStyle = bgColor;
                 minimapCtx.fillRect(0, 0, minimapWidth, minimapHeight);
 
                 const offsetX = (minimapWidth - graphWidth * mmScale) / 2;
@@ -6606,15 +6744,15 @@
                     const isSelected = selectedNodeIds && selectedNodeIds.has(node.id);
 
                     if (isRoot) {
-                        minimapCtx.fillStyle = '#6c5ce7';
+                        minimapCtx.fillStyle = isLight ? '#667eea' : '#6c5ce7';
                     } else if (isSelected) {
-                        minimapCtx.fillStyle = '#00ff88';
+                        minimapCtx.fillStyle = isLight ? '#00c853' : '#00ff88';
                     } else {
                         const level = node.level;
-                        if (level === 1) minimapCtx.fillStyle = '#4a4e69';
-                        else if (level === 2) minimapCtx.fillStyle = '#3b3f5c';
-                        else if (level === 3) minimapCtx.fillStyle = '#2d2f4a';
-                        else minimapCtx.fillStyle = '#25273c';
+                        if (level === 1) minimapCtx.fillStyle = isLight ? '#e2e8f0' : '#4a4e69';
+                        else if (level === 2) minimapCtx.fillStyle = isLight ? '#cbd5e1' : '#3b3f5c';
+                        else if (level === 3) minimapCtx.fillStyle = isLight ? '#e2e8f0' : '#2d2f4a';
+                        else minimapCtx.fillStyle = isLight ? '#f1f5f9' : '#25273c';
                     }
 
                     const size = isRoot ? 4 : 2;
