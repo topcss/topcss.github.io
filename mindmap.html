@@ -1278,7 +1278,7 @@
             </div>
             <div class="modal-body">
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="font-weight:700;">版本号：</span><span style="font-family:monospace;">v1.1</span></div>
+                    <div><span style="font-weight:700;">版本号：</span><span style="font-family:monospace;">v1.2</span></div>
                     <div><span style="font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div class="modal-divider"></div>
                     <div>
@@ -4794,12 +4794,13 @@
                     if (cont && cont.visible) selectNode(cont);
                 }
 
-                const nextCurrent = (prevCurrentId !== null && nodeGraphics.get(prevCurrentId) && nodeGraphics.get(prevCurrentId).visible)
-                    ? nodeGraphics.get(prevCurrentId)
-                    : (nodeGraphics.get(nodeId) && nodeGraphics.get(nodeId).visible ? nodeGraphics.get(nodeId) : null);
-                if (nextCurrent) {
-                    currentSelectedNode = nextCurrent;
-                    ensureNodeInViewport(nextCurrent);
+                const nodeCont = nodeGraphics.get(nodeId);
+                if (nodeCont && nodeCont.visible) {
+                    currentSelectedNode = nodeCont;
+                    ensureNodeInViewport(nodeCont);
+                } else if (prevCurrentId !== null && nodeGraphics.get(prevCurrentId) && nodeGraphics.get(prevCurrentId).visible) {
+                    currentSelectedNode = nodeGraphics.get(prevCurrentId);
+                    ensureNodeInViewport(currentSelectedNode);
                 }
 
                 minimapDirty = true;
