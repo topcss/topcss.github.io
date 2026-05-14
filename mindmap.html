@@ -1321,7 +1321,7 @@
             </div>
             <div class="modal-body">
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="font-weight:700;">版本号：</span><span style="font-family:monospace;">v1.4</span></div>
+                    <div><span style="font-weight:700;">版本号：</span><span style="font-family:monospace;">v1.5</span></div>
                     <div><span style="font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div class="modal-divider"></div>
                     <div>
@@ -2625,17 +2625,21 @@
             }
 
             function drawSelectionRect() {
-                selectionGraphics.clear();
                 const x = Math.min(selectionStart.x, selectionRect.x);
                 const y = Math.min(selectionStart.y, selectionRect.y);
                 const w = Math.abs(selectionRect.x - selectionStart.x);
                 const h = Math.abs(selectionRect.y - selectionStart.y);
-                const accentColor = getCssColor('--accent-color');
 
-                selectionGraphics.lineStyle(2, accentColor, 0.8);
-                selectionGraphics.beginFill(accentColor, 0.1);
-                selectionGraphics.drawRect(x, y, w, h);
-                selectionGraphics.endFill();
+                const scale = container.scale.x;
+                const containerX = container.x;
+                const containerY = container.y;
+                
+                selectionOverlay.style.display = 'block';
+                selectionOverlay.style.transform = `translate(${containerX}px, ${containerY}px) scale(${scale})`;
+                selectionRectEl.style.left = `${x}px`;
+                selectionRectEl.style.top = `${y}px`;
+                selectionRectEl.style.width = `${w}px`;
+                selectionRectEl.style.height = `${h}px`;
             }
 
             function selectNodesInRect() {
@@ -2759,7 +2763,7 @@
                         onDocumentMouseUp = (docE) => {
                             if (isSelecting) {
                                 isSelecting = false;
-                                selectionGraphics.clear();
+                                selectionOverlay.style.display = 'none';
                                 selectNodesInRect();
                                 refreshTopbarStats();
                                 if (onDocumentMouseMove) {
@@ -2790,7 +2794,7 @@
             app.view.addEventListener('mouseup', (e) => {
                 if (e.button === 0 && isSelecting) {
                     isSelecting = false;
-                    selectionGraphics.clear();
+                    selectionOverlay.style.display = 'none';
                     selectNodesInRect();
                     refreshTopbarStats();
                 }
@@ -4618,6 +4622,34 @@
                 transform-origin: 0 0;
             `;
             document.body.appendChild(domLayer);
+
+            const selectionOverlay = document.createElement('div');
+            selectionOverlay.id = 'selection-overlay';
+            selectionOverlay.style.cssText = `
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                user-select: none;
+                z-index: 3;
+                transform: translate3d(0px, 0px, 0px);
+                transform-origin: 0 0;
+                display: none;
+            `;
+            document.body.appendChild(selectionOverlay);
+
+            const selectionRectEl = document.createElement('div');
+            selectionRectEl.id = 'selection-rect';
+            selectionRectEl.style.cssText = `
+                position: absolute;
+                border: 2px solid var(--accent-color);
+                background: rgba(0, 255, 136, 0.1);
+                pointer-events: none;
+            `;
+            selectionOverlay.appendChild(selectionRectEl);
+
             let domNeedsUpdate = true;
             let domBatchActive = false;
             let domBatchFragment = null;
