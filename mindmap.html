@@ -1321,7 +1321,7 @@
             </div>
             <div class="modal-body">
                 <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="font-weight:700;">版本号：</span><span style="font-family:monospace;">v1.5</span></div>
+                    <div><span style="font-weight:700;">版本号：</span><span style="font-family:monospace;">v1.6</span></div>
                     <div><span style="font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div class="modal-divider"></div>
                     <div>
@@ -1569,6 +1569,7 @@
 
             let viewportMargin = 200;
             function updateViewportClipping() {
+                updateEditInputPosition();
                 const scale = container.scale.x;
                 const viewX = -container.x / scale;
                 const viewY = -container.y / scale;
@@ -2486,6 +2487,40 @@
                 });
             }
 
+            function updateEditInputPosition() {
+                if (!editingInput) return;
+                const { input, node, containerItem, baseWidth, baseHeight } = editingInput;
+                const worldPos = containerItem.getGlobalPosition();
+                const scale = container.scale.x;
+                const nodeData = containerItem._nodeData;
+                const rect = getCanvasRect();
+                const scaleToClientX = rect.width / app.screen.width;
+                const scaleToClientY = rect.height / app.screen.height;
+                const uiScaleX = scale * scaleToClientX;
+                const uiScaleY = scale * scaleToClientY;
+                const maxWidth = 520;
+                const maxHeightPx = Math.max(nodeData.height * uiScaleY, Math.max(120, Math.min(rect.height * 0.6, rect.height - 40)));
+                const measured = measureNodeText(nodeData.style, input.value, maxWidth);
+                const newWidth = Math.max(baseWidth, measured.width);
+                const newHeight = Math.max(baseHeight, measured.height);
+                const widthPx = newWidth * uiScaleX;
+                const heightPx = Math.min(newHeight * uiScaleY, maxHeightPx);
+                const { x: screenX, y: screenY } = canvasToClientPoint(worldPos.x, worldPos.y);
+                input.style.left = `${screenX - widthPx / 2}px`;
+                input.style.top = `${screenY - heightPx / 2}px`;
+                input.style.width = `${widthPx}px`;
+                input.style.height = `${heightPx}px`;
+                input.style.fontSize = `${nodeData.style.fontSize * uiScaleX}px`;
+                input.style.lineHeight = `${nodeData.style.fontSize * 1.4 * uiScaleX}px`;
+                input.style.padding = `${nodeData.style.paddingY * uiScaleY}px ${nodeData.style.paddingX * uiScaleX}px`;
+                input.style.borderRadius = `${nodeData.style.radius * uiScaleX}px`;
+                input.style.minWidth = `${nodeData.width * uiScaleX}px`;
+                input.style.minHeight = `${nodeData.height * uiScaleY}px`;
+                input.style.maxWidth = `${(maxWidth + nodeData.style.paddingX * 2) * uiScaleX}px`;
+                input.style.maxHeight = `${maxHeightPx}px`;
+                input.style.overflow = (newHeight * uiScaleY > maxHeightPx) ? 'auto' : 'hidden';
+            }
+
             function finishNodeEdit() {
                 if (!editingInput) return;
 
@@ -2756,6 +2791,7 @@
                                         container.y += scrollY;
                                     }
                                     clampContainerPosition();
+                                    updateEditInputPosition();
                                 }
                             }
                         };
@@ -2848,6 +2884,7 @@
 
                 container.x = targetX;
                 container.y = targetY;
+                updateEditInputPosition();
             }
 
             function selectNodeByKeyboard(nodeContainer) {
@@ -4170,18 +4207,17 @@
                     const newScale = container.scale.x * delta;
                     const { x: mouseX, y: mouseY } = clientToCanvasPoint(e.clientX, e.clientY);
                     updateZoom(newScale, mouseX, mouseY);
-                    clampContainerPosition();
                 } else if (e.altKey) {
                     const scrollSpeed = 4;
-                    if (canDrag(e.deltaY * scrollSpeed, 0)) {
-                        container.x += e.deltaY * scrollSpeed;
+                    if (canDrag(-e.deltaY * scrollSpeed, 0)) {
+                        container.x -= e.deltaY * scrollSpeed;
                     }
                     clampContainerPosition();
                     updateViewportClipping();
                 } else {
                     const scrollSpeed = 4;
-                    if (canDrag(0, e.deltaY * scrollSpeed)) {
-                        container.y += e.deltaY * scrollSpeed;
+                    if (canDrag(0, -e.deltaY * scrollSpeed)) {
+                        container.y -= e.deltaY * scrollSpeed;
                     }
                     clampContainerPosition();
                     updateViewportClipping();
