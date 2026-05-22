@@ -40,6 +40,20 @@
             --minimap-bg: rgba(13, 17, 23, 0.3);
             --search-bg: rgba(14, 17, 24, 0.80);
             --canvas-bg: #0d1117;
+            --btn-bg: rgba(255, 255, 255, 0.06);
+            --btn-hover-bg: rgba(255, 255, 255, 0.09);
+            --btn-hover-bg-strong: rgba(255, 255, 255, 0.12);
+            --btn-active-bg: rgba(255, 255, 255, 0.10);
+            --menu-hover-bg: rgba(255, 255, 255, 0.07);
+            --modal-header-bg: rgba(0, 0, 0, 0.6);
+            --divider-bg: rgba(255, 255, 255, 0.10);
+            --scrollbar-track: rgba(255, 255, 255, 0.06);
+            --scrollbar-thumb: rgba(255, 255, 255, 0.25);
+            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.4);
+            --focus-ring: rgba(255, 255, 255, 0.12);
+            --focus-ring-menu: rgba(255, 255, 255, 0.10);
+            --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+            --dropdown-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
         }
 
         .theme-light {
@@ -75,6 +89,32 @@
             --minimap-bg: rgba(241, 245, 249, 0.8);
             --search-bg: rgba(255, 255, 255, 0.92);
             --canvas-bg: #f1f5f9;
+            --btn-bg: rgba(0, 0, 0, 0.05);
+            --btn-hover-bg: rgba(0, 0, 0, 0.06);
+            --btn-hover-bg-strong: rgba(0, 0, 0, 0.08);
+            --btn-active-bg: rgba(0, 0, 0, 0.08);
+            --menu-hover-bg: rgba(0, 0, 0, 0.05);
+            --modal-header-bg: rgba(0, 0, 0, 0.05);
+            --divider-bg: rgba(0, 0, 0, 0.10);
+            --scrollbar-track: rgba(0, 0, 0, 0.08);
+            --scrollbar-thumb: rgba(0, 0, 0, 0.35);
+            --scrollbar-thumb-hover: rgba(0, 0, 0, 0.5);
+            --focus-ring: rgba(0, 0, 0, 0.10);
+            --focus-ring-menu: rgba(0, 0, 0, 0.10);
+            --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --dropdown-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .lucide-icon {
+            display: block;
+            width: 14px;
+            height: 14px;
+            opacity: 0.9;
+            filter: invert(92%);
+        }
+
+        .theme-light .lucide-icon {
+            filter: invert(20%);
         }
 
         html {
@@ -130,13 +170,6 @@
         .topbar-btn .lucide-icon {
             width: 14px;
             height: 14px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        .theme-light .topbar-btn .lucide-icon {
-            filter: invert(20%);
         }
 
         .topbar-btn:hover .lucide-icon {
@@ -151,10 +184,6 @@
         .topbar-btn:hover {
             background: rgba(0, 255, 136, 0.18);
             border-color: rgba(0, 255, 136, 0.55);
-        }
-
-        #topbar::-webkit-scrollbar {
-            height: 0;
         }
 
         .topbar-stats {
@@ -174,19 +203,13 @@
         }
 
         .theme-light .topbar-stats {
-            background: rgba(0, 0, 0, 0.06);
             color: #10b981;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
 
         .menu-btn {
             appearance: none;
             border: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--btn-bg);
             color: var(--text-primary);
             font-family: inherit;
             font-size: var(--font-size-base);
@@ -208,13 +231,6 @@
         .menu-btn .lucide-icon {
             width: 14px;
             height: 14px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        .theme-light .menu-btn .lucide-icon {
-            filter: invert(20%);
         }
 
         .menu-btn .menu-caret {
@@ -227,26 +243,15 @@
         }
 
         .menu-btn:hover {
-            background: rgba(255, 255, 255, 0.09);
+            background: var(--btn-hover-bg);
             border-color: var(--border-hover);
             box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
         }
 
-        .theme-light .menu-btn:hover {
-            background: rgba(0, 0, 0, 0.06);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-        }
-
         .menu-container:has(.menu-dropdown.show) .menu-btn {
-            background: rgba(255, 255, 255, 0.10);
+            background: var(--btn-active-bg);
             border-color: rgba(255, 255, 255, 0.26);
             box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        .theme-light .menu-container:has(.menu-dropdown.show) .menu-btn {
-            background: rgba(0, 0, 0, 0.08);
-            border-color: rgba(0, 0, 0, 0.20);
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
         }
 
         .menu-container:has(.menu-dropdown.show) .menu-btn .menu-caret {
@@ -256,11 +261,7 @@
 
         .menu-btn:focus-visible {
             outline: none;
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12), 0 10px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        .theme-light .menu-btn:focus-visible {
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10), 0 10px 24px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 0 3px var(--focus-ring), 0 10px 24px rgba(0, 0, 0, 0.4);
         }
 
         .menu-dropdown {
@@ -310,14 +311,7 @@
         .menu-item .lucide-icon {
             width: 14px;
             height: 14px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
             flex-shrink: 0;
-        }
-
-        .theme-light .menu-item .lucide-icon {
-            filter: invert(20%);
         }
 
         .menu-item:hover .lucide-icon {
@@ -338,12 +332,8 @@
         }
 
         .menu-item:hover {
-            background: rgba(255, 255, 255, 0.07);
+            background: var(--menu-hover-bg);
             color: var(--text-primary);
-        }
-
-        .theme-light .menu-item:hover {
-            background: rgba(0, 0, 0, 0.05);
         }
 
         .menu-item:active {
@@ -352,13 +342,8 @@
 
         .menu-item:focus-visible {
             outline: none;
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.10);
-        }
-
-        .theme-light .menu-item:focus-visible {
-            background: rgba(0, 0, 0, 0.05);
-            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
+            background: var(--btn-active-bg);
+            box-shadow: 0 0 0 3px var(--focus-ring-menu);
         }
 
         .menu-item:disabled {
@@ -378,12 +363,8 @@
 
         .menu-divider {
             height: 1px;
-            background: rgba(255, 255, 255, 0.10);
+            background: var(--divider-bg);
             margin: 6px 6px;
-        }
-
-        .theme-light .menu-divider {
-            background: rgba(0, 0, 0, 0.10);
         }
 
         .menu-container {
@@ -411,11 +392,7 @@
             background: var(--search-bg);
             border: 1px solid var(--border-color);
             backdrop-filter: blur(10px);
-            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
-        }
-
-        .theme-light #search-panel {
-            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--dropdown-shadow);
         }
 
         #search-panel,
@@ -429,24 +406,16 @@
             height: 26px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--btn-bg);
             color: var(--text-primary);
             padding: 0 8px;
             outline: none;
             font-size: var(--font-size-base);
         }
 
-        .theme-light #search-panel .search-input {
-            background: rgba(0, 0, 0, 0.05);
-        }
-
         #search-panel .search-input:focus {
             border-color: var(--border-hover);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .theme-light #search-panel .search-input:focus {
-            background: rgba(0, 0, 0, 0.08);
+            background: var(--btn-active-bg);
         }
 
         #search-panel .search-btn {
@@ -455,7 +424,7 @@
             padding: 0 8px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--btn-bg);
             color: var(--text-primary);
             font-size: var(--font-size-base);
             font-weight: 600;
@@ -464,17 +433,9 @@
             white-space: nowrap;
         }
 
-        .theme-light #search-panel .search-btn {
-            background: rgba(0, 0, 0, 0.05);
-        }
-
         #search-panel .search-btn:hover {
-            background: rgba(255, 255, 255, 0.09);
+            background: var(--btn-hover-bg);
             border-color: var(--border-hover);
-        }
-
-        .theme-light #search-panel .search-btn:hover {
-            background: rgba(0, 0, 0, 0.08);
         }
 
         #search-panel .search-btn:not(.search-inline-btn):active {
@@ -529,7 +490,7 @@
         }
 
         #search-panel .search-inline-btn.active {
-            background: rgba(255, 255, 255, 0.10);
+            background: var(--btn-active-bg);
             border-color: rgba(235, 240, 255, 0.42);
             box-shadow: 0 0 0 1px rgba(235, 240, 255, 0.12) inset;
         }
@@ -557,13 +518,6 @@
         #search-panel .lucide-icon {
             width: 15px;
             height: 15px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        .theme-light #search-panel .lucide-icon {
-            filter: invert(20%);
         }
 
         #search-panel .search-btn:hover .lucide-icon {
@@ -586,11 +540,6 @@
             display: none !important;
         }
 
-        .modal.hidden,
-        .modal.hidden * {
-            display: none !important;
-        }
-
         .modal {
             position: fixed;
             inset: 0;
@@ -605,55 +554,24 @@
 
         .modal ::-webkit-scrollbar-track,
         textarea::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--scrollbar-track);
             border-radius: 3px;
         }
 
         .modal ::-webkit-scrollbar-thumb,
         textarea::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.25);
+            background: var(--scrollbar-thumb);
             border-radius: 3px;
         }
 
         .modal ::-webkit-scrollbar-thumb:hover,
         textarea::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.4);
+            background: var(--scrollbar-thumb-hover);
         }
 
         .modal ::-webkit-scrollbar-corner,
         textarea::-webkit-scrollbar-corner {
             background: transparent;
-        }
-
-        .theme-light .modal ::-webkit-scrollbar-track,
-        .theme-light textarea::-webkit-scrollbar-track,
-        .theme-light #import-content::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.08);
-        }
-
-        .theme-light .modal ::-webkit-scrollbar-thumb,
-        .theme-light textarea::-webkit-scrollbar-thumb,
-        .theme-light #import-content::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 3px;
-        }
-
-        .theme-light .modal ::-webkit-scrollbar-thumb:hover,
-        .theme-light textarea::-webkit-scrollbar-thumb:hover,
-        .theme-light #import-content::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.5);
-        }
-
-        .theme-light .modal,
-        .theme-light textarea {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(0, 0, 0, 0.35) rgba(0, 0, 0, 0.08);
-        }
-
-        .modal,
-        textarea {
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.06);
         }
 
         .modal .modal-backdrop {
@@ -675,7 +593,7 @@
             border-radius: 12px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+            box-shadow: var(--card-shadow);
             color: var(--text-primary);
         }
 
@@ -685,33 +603,17 @@
             justify-content: space-between;
             gap: 10px;
             padding: 12px 14px;
-            background: rgba(0, 0, 0, 0.6);
+            background: var(--modal-header-bg);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
             border-radius: 12px 12px 0 0;
         }
 
-        .theme-light .modal .modal-card {
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .theme-light .modal .modal-header {
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        .theme-light .modal .modal-body {
-            color: var(--text-primary);
-        }
-
         .modal-divider {
             height: 1px;
-            background: rgba(255, 255, 255, 0.10);
+            background: var(--divider-bg);
             margin: 4px 0;
-        }
-
-        .theme-light .modal-divider {
-            background: rgba(0, 0, 0, 0.10);
         }
 
         .modal-label {
@@ -731,11 +633,6 @@
             color: var(--text-primary);
             font-family: monospace;
             font-size: var(--font-size-base);
-        }
-
-        .theme-light .modal-select option {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
         }
 
         .modal-input {
@@ -775,7 +672,7 @@
         .modal .modal-close {
             appearance: none;
             border: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--btn-bg);
             color: var(--text-primary);
             font-family: monospace;
             font-size: 0;
@@ -793,18 +690,6 @@
         .modal .modal-close .lucide-icon {
             width: 16px;
             height: 16px;
-            display: block;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        .theme-light .modal .modal-close {
-            background: rgba(0, 0, 0, 0.06);
-            border-color: rgba(0, 0, 0, 0.15);
-        }
-
-        .theme-light .modal .modal-close:hover {
-            background: rgba(0, 0, 0, 0.12);
         }
 
         .theme-light .modal .modal-close .lucide-icon {
@@ -907,10 +792,6 @@
             background: rgba(0, 200, 83, 0.08);
         }
 
-        #minimap .minimap-label {
-            display: none;
-        }
-
         #zoom-control {
             position: fixed;
             bottom: 20px;
@@ -965,12 +846,6 @@
         #zoom-control .zoom-btn .lucide-icon {
             width: 14px;
             height: 14px;
-            opacity: 0.9;
-            filter: invert(92%);
-        }
-
-        .theme-light #zoom-control .zoom-btn .lucide-icon {
-            filter: invert(20%);
         }
 
         #zoom-control .zoom-value {
@@ -1042,6 +917,61 @@
             font-size: 13px;
             font-family: inherit;
             opacity: 0.85;
+        }
+
+        .about-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .about-content .mono {
+            font-family: monospace;
+        }
+
+        .about-content p {
+            margin: 0 0 10px;
+        }
+
+        .about-content p:last-child {
+            margin: 0;
+        }
+
+        .export-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .export-field {
+            flex: 1;
+        }
+
+        .export-preview-wrap {
+            margin-bottom: 12px;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .topbar-btn.accent {
+            background: var(--accent-bg);
+            border-color: var(--accent-border);
+            color: var(--link-color);
+        }
+
+        .topbar-btn.danger {
+            background: rgba(255, 102, 102, 0.2);
+            border-color: rgba(255, 102, 102, 0.5);
+            color: #ff6666;
+        }
+
+        .label-inline {
+            display: inline;
+            margin-bottom: 0;
         }
 
         @keyframes spin {
@@ -1149,7 +1079,6 @@
         </div>
     </div>
     <div id="minimap" class="panel-hidden">
-        <span class="minimap-label">缩略图</span>
         <div class="viewport-rect"></div>
     </div>
     <div id="zoom-control" class="panel-hidden">
@@ -1173,8 +1102,8 @@
             <button id="search-regex-btn" class="search-btn icon-btn search-inline-btn" title="正则" aria-label="正则">
                 <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/asterisk.svg" />
             </button>
-            <input type="checkbox" id="search-regex" style="display:none;" tabindex="-1" aria-hidden="true" />
-            <input type="checkbox" id="search-ignorecase" style="display:none;" tabindex="-1" aria-hidden="true" />
+            <input type="checkbox" id="search-regex" class="panel-hidden" tabindex="-1" aria-hidden="true" />
+            <input type="checkbox" id="search-ignorecase" class="panel-hidden" tabindex="-1" aria-hidden="true" />
         </div>
         <span id="search-count" class="search-count">0/0</span>
         <div class="search-nav">
@@ -1198,7 +1127,7 @@
             </button>
         </div>
     </div>
-    <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div id="help-modal" class="modal panel-hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1240,7 +1169,7 @@
         </div>
     </div>
 
-    <div id="api-help-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div id="api-help-modal" class="modal panel-hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1310,7 +1239,7 @@
         </div>
     </div>
 
-    <div id="about-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div id="about-modal" class="modal panel-hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1320,27 +1249,28 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div style="display:flex;flex-direction:column;gap:10px;">
-                    <div><span style="font-weight:700;">版本号：</span><span style="font-family:monospace;">v1.6</span></div>
-                    <div><span style="font-weight:700;">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
+                <div class="about-content">
+                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v1.6</span></div>
+                    <div><span class="modal-label label-inline">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div class="modal-divider"></div>
                     <div>
-                        <p style="margin:0 0 10px;">
+                        <p>
                             十年前，我基于百度脑图开发了桌面端脑图工具 <a href="https://github.com/NaoTu/DesktopNaotu" target="_blank" rel="noopener noreferrer">DesktopNaotu</a>，并开源发布，为社区贡献了一份绵薄之力。
                         </p>
-                        <p style="margin:0 0 10px;">
+                        <p>
                             随着技术持续迭代，旧版本受限于早期技术架构，性能瓶颈日益凸显，也难以迭代维护。于是，我决定从零重构，打造全新版本。新版本彻底摆脱旧浏览器兼容的历史包袱，从底层架构到交互逻辑全面革新，聚焦极致用户体验与高性能两大核心，力求打磨出流畅、高效、令人惊艳的产品。
                         </p>
-                        <p style="margin:0;">
-                            真正出色的工具，往往是 “日用而不觉”—— 好用到浑然天成，顺手到毫无阻碍。这正是我追求的目标：当用户使用时，只觉自然流畅、得心应手，毫无违和与卡顿，便是我最大的满足。
+                        <p>
+                            真正出色的工具，往往是 "日用而不觉"—— 好用到浑然天成，顺手到毫无阻碍。这正是我追求的目标：当用户使用时，只觉自然流畅、得心应手，毫无违和与卡顿，便是我最大的满足。
                         </p>
                     </div>
+                </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="export-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div id="export-modal" class="modal panel-hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1350,8 +1280,8 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-                    <div style="flex: 1;">
+                <div class="export-row">
+                    <div class="export-field">
                         <label class="modal-label">导出级别</label>
                         <select id="export-level" class="modal-select">
                             <option value="1">只导出1级</option>
@@ -1363,18 +1293,18 @@
                             <option value="999" selected>全部级别</option>
                         </select>
                     </div>
-                    <div style="flex: 1;">
+                    <div class="export-field">
                         <label class="modal-label">文件名</label>
                         <input type="text" id="export-filename" value="思维导图" class="modal-input">
                     </div>
                 </div>
-                <div style="margin-bottom: 12px;">
+                <div class="export-preview-wrap">
                     <label class="modal-label">预览</label>
                     <textarea id="export-preview" readonly class="modal-textarea">
                     "></textarea>
                 </div>
-                <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button id="export-copy-btn" class="topbar-btn" style="background: var(--accent-bg); border-color: var(--accent-border); color: var(--link-color);">
+                <div class="export-actions">
+                    <button id="export-copy-btn" class="topbar-btn accent">
                         <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/copy.svg" />
                         <span>复制内容</span>
                     </button>
@@ -1387,7 +1317,7 @@
         </div>
     </div>
 
-    <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div id="import-modal" class="modal panel-hidden" role="dialog" aria-modal="true">
         <div class="modal-backdrop"></div>
         <div class="modal-card">
             <div class="modal-header">
@@ -1397,7 +1327,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div style="margin-bottom: 12px;">
+                <div class="export-preview-wrap">
                     <label class="modal-label">导入级别</label>
                     <select id="import-level" class="modal-select">
                         <option value="1">只导入1级</option>
@@ -1409,12 +1339,12 @@
                         <option value="999" selected>全部级别</option>
                     </select>
                 </div>
-                <div style="margin-bottom: 12px;">
+                <div class="export-preview-wrap">
                     <label class="modal-label">Markdown内容</label>
                     <textarea id="import-content" placeholder="粘贴Markdown内容..." class="modal-textarea"></textarea>
                 </div>
-                <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                    <button id="import-cancel-btn" class="topbar-btn" style="background: rgba(255, 102, 102, 0.2); border-color: rgba(255, 102, 102, 0.5); color: #ff6666;">
+                <div class="export-actions">
+                    <button id="import-cancel-btn" class="topbar-btn danger">
                         <img class="lucide-icon" alt="" src="https://unpkg.com/lucide-static@1.14.0/icons/x.svg" />
                         <span>取消</span>
                     </button>
@@ -5354,12 +5284,12 @@
 
             function openHelp() {
                 if (!helpModal) return;
-                helpModal.classList.remove('hidden');
+                helpModal.classList.remove('panel-hidden');
             }
 
             function closeHelp() {
                 if (!helpModal) return;
-                helpModal.classList.add('hidden');
+                helpModal.classList.add('panel-hidden');
             }
 
             if (helpBtn) {
@@ -5379,12 +5309,12 @@
 
             function openApiHelp() {
                 if (!apiHelpModal) return;
-                apiHelpModal.classList.remove('hidden');
+                apiHelpModal.classList.remove('panel-hidden');
             }
 
             function closeApiHelp() {
                 if (!apiHelpModal) return;
-                apiHelpModal.classList.add('hidden');
+                apiHelpModal.classList.add('panel-hidden');
             }
 
             if (apiHelpBtn) {
@@ -5399,12 +5329,12 @@
 
             function openAbout() {
                 if (!aboutModal) return;
-                aboutModal.classList.remove('hidden');
+                aboutModal.classList.remove('panel-hidden');
             }
 
             function closeAbout() {
                 if (!aboutModal) return;
-                aboutModal.classList.add('hidden');
+                aboutModal.classList.add('panel-hidden');
             }
 
             if (aboutBtn) {
@@ -6453,12 +6383,12 @@
                     }
                 }
                 
-                exportModal.classList.remove('hidden');
+                exportModal.classList.remove('panel-hidden');
             }
 
             function closeExportModal() {
                 if (!exportModal) return;
-                exportModal.classList.add('hidden');
+                exportModal.classList.add('panel-hidden');
             }
 
             function updateExportPreview() {
@@ -6578,12 +6508,12 @@
                 if (!importModal) return;
                 importContent.value = '';
                 importLevel.value = '4';
-                importModal.classList.remove('hidden');
+                importModal.classList.remove('panel-hidden');
             }
 
             function closeImportModal() {
                 if (!importModal) return;
-                importModal.classList.add('hidden');
+                importModal.classList.add('panel-hidden');
             }
 
             function handleImport() {
@@ -6721,23 +6651,23 @@
             document.addEventListener('keydown', (e) => {
                 if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
                 if (e.key !== 'Escape') return;
-                if (importModal && !importModal.classList.contains('hidden')) {
+                if (importModal && !importModal.classList.contains('panel-hidden')) {
                     closeImportModal();
                     return;
                 }
-                if (exportModal && !exportModal.classList.contains('hidden')) {
+                if (exportModal && !exportModal.classList.contains('panel-hidden')) {
                     closeExportModal();
                     return;
                 }
-                if (helpModal && !helpModal.classList.contains('hidden')) {
+                if (helpModal && !helpModal.classList.contains('panel-hidden')) {
                     closeHelp();
                     return;
                 }
-                if (apiHelpModal && !apiHelpModal.classList.contains('hidden')) {
+                if (apiHelpModal && !apiHelpModal.classList.contains('panel-hidden')) {
                     closeApiHelp();
                     return;
                 }
-                if (aboutModal && !aboutModal.classList.contains('hidden')) {
+                if (aboutModal && !aboutModal.classList.contains('panel-hidden')) {
                     closeAbout();
                     return;
                 }
