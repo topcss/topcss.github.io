@@ -396,7 +396,7 @@
             </div>
             <div class="modal-body">
                 <div class="about-content">
-                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v1.7</span></div>
+                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v1.8</span></div>
                     <div><span class="modal-label label-inline">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div class="modal-divider"></div>
                     <div>
@@ -4467,6 +4467,17 @@
                 }
                 refreshView();
             }
+            async function loadMtFileContent(text, fileHandle = null) {
+                try {
+                    await loadFromMtText(text);
+                    currentFileHandle = fileHandle;
+                    saveMtBtn.disabled = false;
+                    isModified = false;
+                    updateTitle();
+                } catch (err) {
+                    alert('加载文件失败: ' + err.message);
+                }
+            }
             async function openMtFile() {
                 try {
                     const [handle] = await window.showOpenFilePicker({
@@ -4476,13 +4487,9 @@
                         }],
                         excludeAcceptAllOption: true
                     });
-                    currentFileHandle = handle;
                     const file = await handle.getFile();
                     const text = await file.text();
-                    await loadFromMtText(text);
-                    saveMtBtn.disabled = false;
-                    isModified = false;
-                    updateTitle();
+                    await loadMtFileContent(text, handle);
                 } catch (err) {
                     if (err.name !== 'AbortError') {
                         alert('打开文件失败: ' + err.message);
@@ -5027,6 +5034,115 @@
                 app.renderer.resize(window.innerWidth, window.innerHeight);
                 const newCenterX = app.screen.width / 2;
                 const newCenterY = app.screen.height / 2;
+            });
+            // ========== 8. 拖拽打开文件支持 ==========
+            async function handleDropFile(file) {
+                if (!file.name.toLowerCase().endsWith('.mt')) {
+                    alert('只支持拖拽 .mt 格式的思维导图文件');
+                    return;
+                }
+                if (isModified) {
+                    const confirmed = confirm('当前文件有未保存的更改，确定要打开新文件吗？');
+                    if (!confirmed) {
+                        return;
+                    }
+                }
+                try {
+                    const text = await file.text();
+                    await loadMtFileContent(text);
+                } catch (err) {
+                    alert('读取文件失败: ' + err.message);
+                }
+            }
+            const dropOverlay = document.createElement('div');
+            dropOverlay.id = 'drop-overlay';
+            dropOverlay.style.cssText = `
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(4px);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.2s, visibility 0.2s;
+                pointer-events: none;
+            `;
+            const dropIcon = document.createElement('div');
+            dropIcon.innerHTML = '<svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+            dropIcon.style.cssText = `
+                color: #00ff88;
+                margin-bottom: 16px;
+                opacity: 0.9;
+            `;
+            const dropText = document.createElement('div');
+            dropText.textContent = '释放鼠标打开文件';
+            dropText.style.cssText = `
+                color: rgba(235, 240, 255, 0.95);
+                font-size: 18px;
+                font-weight: 600;
+            `;
+            dropOverlay.appendChild(dropIcon);
+            dropOverlay.appendChild(dropText);
+            document.body.appendChild(dropOverlay);
+            let dragCounter = 0;
+            function showDropOverlay() {
+                dragCounter++;
+                dropOverlay.style.opacity = '1';
+                dropOverlay.style.visibility = 'visible';
+                dropOverlay.style.pointerEvents = 'auto';
+            }
+            function hideDropOverlay() {
+                dragCounter--;
+                if (dragCounter <= 0) {
+                    dragCounter = 0;
+                    dropOverlay.style.opacity = '0';
+                    dropOverlay.style.visibility = 'hidden';
+                    dropOverlay.style.pointerEvents = 'none';
+                }
+            }
+            ['dragenter', 'dragover'].forEach(eventName => {
+                document.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showDropOverlay();
+                });
+            });
+            ['dragleave'].forEach(eventName => {
+                document.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    hideDropOverlay();
+                });
+            });
+            document.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dragCounter = 0;
+                dropOverlay.style.opacity = '0';
+                dropOverlay.style.visibility = 'hidden';
+                dropOverlay.style.pointerEvents = 'none';
+                const files = e.dataTransfer?.files;
+                if (files && files.length > 0) {
+                    handleDropFile(files[0]);
+                }
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    dragCounter = 0;
+                    dropOverlay.style.opacity = '0';
+                    dropOverlay.style.visibility = 'hidden';
+                    dropOverlay.style.pointerEvents = 'none';
+                }
+            });
+            window.addEventListener('blur', () => {
+                dragCounter = 0;
+                dropOverlay.style.opacity = '0';
+                dropOverlay.style.visibility = 'hidden';
+                dropOverlay.style.pointerEvents = 'none';
             });
             // ========== 7. 小地图 (Minimap) ==========
             const minimapEl = document.getElementById('minimap');
