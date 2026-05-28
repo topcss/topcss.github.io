@@ -144,6 +144,7 @@
                 <div class="menu-divider"></div>
                 <button class="menu-item" id="import-md-btn"><img class="lucide-icon" src="https://unpkg.com/lucide-static@1.14.0/icons/upload.svg" /><span>导入 Markdown</span></button>
                 <button class="menu-item" id="export-md-btn"><img class="lucide-icon" src="https://unpkg.com/lucide-static@1.14.0/icons/download.svg" /><span>导出 Markdown</span></button>
+                <button class="menu-item" id="export-svg-btn"><img class="lucide-icon" src="https://unpkg.com/lucide-static@1.14.0/icons/file-image.svg" /><span>导出 SVG</span></button>
                 <div class="menu-divider"></div>
                 <button class="menu-item" id="new-node-btn"><img class="lucide-icon" src="https://unpkg.com/lucide-static@1.14.0/icons/file-plus.svg" /><span>新建导图</span></button>
             </div>
@@ -396,7 +397,7 @@
             </div>
             <div class="modal-body">
                 <div class="about-content">
-                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v1.8</span></div>
+                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v2.0</span></div>
                     <div><span class="modal-label label-inline">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div class="modal-divider"></div>
                     <div>
@@ -3722,6 +3723,7 @@
             const pasteNodeBtn = document.getElementById('paste-node-btn');
             const searchBtn = document.getElementById('search-btn');
             const exportMdBtn = document.getElementById('export-md-btn');
+            const exportSvgBtn = document.getElementById('export-svg-btn');
             const searchPanel = document.getElementById('search-panel');
             const searchInput = document.getElementById('search-input');
             const searchRegex = document.getElementById('search-regex');
@@ -4474,6 +4476,11 @@
                     saveMtBtn.disabled = false;
                     isModified = false;
                     updateTitle();
+                    const rootNode = getRootNode();
+                    if (rootNode) {
+                        selectSingleNode(rootNode);
+                        ensureNodeInViewport(rootNode);
+                    }
                 } catch (err) {
                     alert('加载文件失败: ' + err.message);
                 }
@@ -4706,6 +4713,139 @@
             updateAddNodeButtons();
             function updateExportButton() {
                 if (exportMdBtn) exportMdBtn.disabled = nodesList.length === 0;
+                if (exportSvgBtn) exportSvgBtn.disabled = nodesList.length === 0;
+            }
+            async function exportToSvg() {
+                if (nodesList.length === 0) return;
+                const oldX = container.x;
+                const oldY = container.y;
+                const oldScaleX = container.scale.x;
+                const oldScaleY = container.scale.y;
+                container.x = 0;
+                container.y = 0;
+                container.scale.x = 1;
+                container.scale.y = 1;
+                const bounds = getAllNodesBounds();
+                const padding = 60;
+                const width = bounds.width + padding * 2;
+                const height = bounds.height + padding * 2;
+                const offsetX = -bounds.x + padding;
+                const offsetY = -bounds.y + padding;
+                const nodeById = buildNodeByIdMap();
+                let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+                svgContent += `<rect width="${width}" height="${height}" fill="${getCssColor('--canvas-bg', true)}"/>`;
+                const lines = generateSvgLines(nodeById, offsetX, offsetY);
+                svgContent += lines;
+                const nodes = generateSvgNodes(nodeById, offsetX, offsetY);
+                svgContent += nodes;
+                svgContent += '</svg>';
+                container.x = oldX;
+                container.y = oldY;
+                container.scale.x = oldScaleX;
+                container.scale.y = oldScaleY;
+                const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = `${getSuggestedFilename()}.svg`;
+                link.href = url;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
+            function getAllNodesBounds() {
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                for (const node of nodesList) {
+                    const w = node._width || 200;
+                    const h = node._height || 50;
+                    const x = node.x - w / 2;
+                    const y = node.y - h / 2;
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x + w);
+                    maxY = Math.max(maxY, y + h);
+                }
+                if (minX === Infinity) {
+                    return { x: 0, y: 0, width: 800, height: 600 };
+                }
+                return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+            }
+            function getSuggestedFilename() {
+                if (nodesList.length > 0) {
+                    const rootNode = nodesList.find(n => n.parentId === null);
+                    if (rootNode && rootNode.name) {
+                        return rootNode.name.replace(/[\\/:*?"<>|]/g, '_');
+                    }
+                }
+                return '思维导图';
+            }
+            function generateSvgLines(nodeById, offsetX, offsetY) {
+                let lines = '';
+                const lineColor = getCssColor('--line-color', true);
+                for (const node of nodesList) {
+                    if (node.parentId !== null) {
+                        const parent = nodeById.get(node.parentId);
+                        if (parent) {
+                            const fromWidth = parent._width || 200;
+                            const toWidth = node._width || 200;
+                            const isRoot = parent.parentId === null;
+                            const offset = isRoot ? 80 : 20;
+                            let startX = parent.x + fromWidth / 2 - offset + offsetX;
+                            let startY = parent.y + offsetY;
+                            let endX = node.x - toWidth / 2 + offsetX;
+                            let endY = node.y + offsetY;
+                            const cp1x = startX + (endX - startX) * 0.5;
+                            const cp1y = startY;
+                            const cp2x = endX - (endX - startX) * 0.5;
+                            const cp2y = endY;
+                            const lineWidth = parent.level === 0 ? 4 : 2;
+                            lines += `<path d="M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}" stroke="${lineColor}" stroke-width="${lineWidth}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>`;
+                        }
+                    }
+                }
+                return lines;
+            }
+            function generateSvgNodes(nodeById, offsetX, offsetY) {
+                let nodes = '';
+                for (const node of nodesList) {
+                    const w = node._width || 200;
+                    const h = node._height || 50;
+                    const x = node.x - w / 2 + offsetX;
+                    const y = node.y - h / 2 + offsetY;
+                    const borderRadius = 8;
+                    let bgColor = getCssColor('--node-default-bg', true);
+                    let borderColor = getCssColor('--node-default-border', true);
+                    let textColor = getCssColor('--node-default-text', true);
+                    if (node.parentId === null) {
+                        bgColor = getCssColor('--node-root-bg', true);
+                        borderColor = getCssColor('--node-root-border', true);
+                        textColor = getCssColor('--node-root-text', true);
+                    } else {
+                        const depth = getNodeDepth(node, nodeById);
+                        if (depth === 1) {
+                            bgColor = getCssColor('--node-level1-bg', true);
+                            borderColor = getCssColor('--node-level1-border', true);
+                            textColor = getCssColor('--node-level1-text', true);
+                        }
+                    }
+                    nodes += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${borderRadius}" ry="${borderRadius}" fill="${bgColor}" stroke="${borderColor}" stroke-width="2"/>`;
+                    const fontSize = node.parentId === null ? 18 : 14;
+                    const fontWeight = node.parentId === null ? 'bold' : 'normal';
+                    nodes += `<text x="${x + w/2}" y="${y + h/2 + fontSize/3}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" text-anchor="middle" font-family="Microsoft YaHei, sans-serif">${escapeHtml(node.name)}</text>`;
+                }
+                return nodes;
+            }
+            function getNodeDepth(node, nodeById) {
+                let depth = 0;
+                let current = node;
+                while (current && current.parentId !== null) {
+                    depth++;
+                    current = nodeById.get(current.parentId);
+                }
+                return depth;
+            }
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
             function nodeToMarkdown(node, currentLevel, maxLevel, lines) {
                 if (currentLevel > maxLevel) return;
@@ -4793,6 +4933,13 @@
             }
             if (exportMdBtn) {
                 exportMdBtn.addEventListener('click', openExportModal);
+            }
+            if (exportSvgBtn) {
+                exportSvgBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await exportToSvg();
+                });
             }
             if (exportClose) {
                 exportClose.addEventListener('click', closeExportModal);
