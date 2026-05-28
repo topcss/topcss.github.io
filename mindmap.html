@@ -397,7 +397,7 @@
             </div>
             <div class="modal-body">
                 <div class="about-content">
-                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v2.0</span></div>
+                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v2.1</span></div>
                     <div><span class="modal-label label-inline">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div class="modal-divider"></div>
                     <div>
@@ -563,6 +563,19 @@
                 try { v = localStorage.getItem(storageKey); } catch (e) { v = null; }
                 if (v === '0') el.classList.remove('panel-hidden');
                 else if (v === '1') el.classList.add('panel-hidden');
+            };
+            const persistPanelHiddenState = (id, storageKey) => {
+                const el = document.getElementById(id);
+                if (!el) return null;
+                try { localStorage.setItem(storageKey, el.classList.contains('panel-hidden') ? '1' : '0'); } catch (e) {}
+                return el;
+            };
+            const setPanelHiddenState = (id, storageKey, hidden) => {
+                const el = document.getElementById(id);
+                if (!el) return null;
+                el.classList.toggle('panel-hidden', !!hidden);
+                try { localStorage.setItem(storageKey, hidden ? '1' : '0'); } catch (e) {}
+                return el;
             };
             applyPanelHiddenState('minimap', 'mm_minimap_hidden');
             applyPanelHiddenState('zoom-control', 'mm_zoom_hidden');
@@ -1054,8 +1067,7 @@
                 updateLevelsRec(node, toParent.level + 1);
                 toParent.children.splice(idx, 0, node);
                 applyStyleAndMeasureSubtree(node);
-                refreshView();
-                refreshTopbarStats();
+                refreshUiAfterTreeChange();
                 const cont = nodeGraphics.get(nodeId);
                 if (cont) {
                     selectSingleNode(cont);
@@ -1152,8 +1164,7 @@
                 for (const move of moves) {
                     applyStyleAndMeasureSubtree(move.node);
                 }
-                refreshView();
-                refreshTopbarStats();
+                refreshUiAfterTreeChange();
                 clearAllSelections();
                 for (const move of moves) {
                     const cont = nodeGraphics.get(move.node.id);
@@ -1908,6 +1919,27 @@
                 }
                 actualCount = nodesList.length;
             }
+            // 统一处理序列化节点的恢复，避免各类 undo/redo 逻辑分散复制。
+            function restoreSerializedRoot(serializedList, parentId, insertIndex) {
+                const restoredList = restoreNodesFromSerialized(serializedList);
+                const restoredRoot = restoredList[0];
+                if (!restoredRoot) return null;
+                if (!attachNodeToParent(restoredRoot, parentId, insertIndex)) return null;
+                renderNodeAndDescendants(restoredRoot);
+                return restoredRoot;
+            }
+            function restoreSerializedRoots(rootSnapshots) {
+                const restoredRoots = [];
+                for (const snap of rootSnapshots) {
+                    const restoredRoot = restoreSerializedRoot(
+                        snap.serialized,
+                        snap.parentId,
+                        snap.index >= 0 ? snap.index : undefined
+                    );
+                    if (restoredRoot) restoredRoots.push(restoredRoot);
+                }
+                return restoredRoots;
+            }
             function removeNodeGraphicsAndSpan(id) {
                 removeNodesGraphicsAndSpans(new Set([id]));
             }
@@ -1966,8 +1998,7 @@
                     if (deleteSet.has(nodesList[i].id)) nodesList.splice(i, 1);
                 }
                 removeNodesGraphicsAndSpans(deleteSet);
-                actualCount = nodesList.length;
-                refreshView();
+                syncTreeLayout();
             }
             function setNodeNameById(nodeId, newName) {
                 const node = findNodeById(nodeId);
@@ -2002,112 +2033,14 @@
                 repositionSubtree(node);
             }
             function addNodeAsChild(parentNode) {
-                const newNode = new MindNode(nextNodeId++, '', parentNode.id, parentNode.level + 1);
-                parentNode.children.push(newNode);
-                nodesList.push(newNode);
-                actualCount = nodesList.length;
-                const { container: nodeCont, width, height, textWidth, textHeight } = createNodeGraphics(newNode);
-                nodeGraphics.set(newNode.id, nodeCont);
-                container.addChild(nodeCont);
-                createDomSpanForNode(newNode, width, height, textWidth, textHeight);
-                refreshView();
-                selectSingleNode(nodeCont);
-                ensureNodeInViewport(nodeCont);
-                startNodeEdit(newNode, nodeCont);
-                refreshTopbarStats();
-                const addSnap = serializeSubtree(newNode);
-                const addParentId = parentNode.id;
-                const addIndex = parentNode.children.length - 1;
-                pushCommand({
-                    type: 'add',
-                    node: { id: newNode.id, parentId: addParentId, index: addIndex, serialized: addSnap },
-                    undo: () => {
-                        isHistoryApplying = true;
-                        clearAllSelections();
-                        deleteNodeSubtreeById(newNode.id);
-                        isHistoryApplying = false;
-                        updateUndoRedoButtons();
-                    },
-                    redo: () => {
-                        isHistoryApplying = true;
-                        const restoredList = restoreNodesFromSerialized(addSnap);
-                        const restoredRoot = restoredList[0];
-                        if (restoredRoot && attachNodeToParent(restoredRoot, addParentId, addIndex)) {
-                            renderNodeAndDescendants(restoredRoot);
-                            actualCount = nodesList.length;
-                refreshView();
-                const nodeCont2 = nodeGraphics.get(restoredRoot.id);
-                            if (nodeCont2) {
-                                selectSingleNode(nodeCont2);
-                                ensureNodeInViewport(nodeCont2);
-                            }
-                        }
-                        isHistoryApplying = false;
-                        updateUndoRedoButtons();
-                    }
-                });
+                return addChildNodeAndEdit(parentNode);
             }
             function addNodeAsSiblingAtEnd(currentNode) {
                 if (currentNode.parentId === null) {
                     addNodeAsChild(currentNode);
                     return;
                 }
-                const parentNode = findNodeById(currentNode.parentId);
-                if (!parentNode) return;
-                const newNode = new MindNode(nextNodeId++, '', parentNode.id, parentNode.level + 1);
-                const idx = parentNode.children.findIndex(c => c.id === currentNode.id);
-                if (idx >= 0) {
-                    parentNode.children.splice(idx + 1, 0, newNode);
-                } else {
-                    parentNode.children.push(newNode);
-                }
-                nodesList.push(newNode);
-                actualCount = nodesList.length;
-                const created = createNodeGraphics(newNode);
-                const nodeCont = created.container;
-                nodeGraphics.set(newNode.id, nodeCont);
-                container.addChild(nodeCont);
-                createDomSpanForNode(newNode, created.width, created.height, created.textWidth, created.textHeight);
-                refreshView();
-                clearAllSelections();
-                if (nodeCont) {
-                    selectNode(nodeCont);
-                    currentSelectedNode = nodeCont;
-                    ensureNodeInViewport(nodeCont);
-                    startNodeEdit(newNode, nodeCont);
-                }
-                refreshTopbarStats();
-                const insertIndex = parentNode.children.findIndex(c => c.id === newNode.id);
-                const addSnap = serializeSubtree(newNode);
-                const addParentId = parentNode.id;
-                pushCommand({
-                    type: 'add',
-                    node: { id: newNode.id, parentId: addParentId, index: insertIndex, serialized: addSnap },
-                    undo: () => {
-                        isHistoryApplying = true;
-                        clearAllSelections();
-                        deleteNodeSubtreeById(newNode.id);
-                        isHistoryApplying = false;
-                        updateUndoRedoButtons();
-                    },
-                    redo: () => {
-                        isHistoryApplying = true;
-                        const restoredList = restoreNodesFromSerialized(addSnap);
-                        const restoredRoot = restoredList[0];
-                        if (restoredRoot && attachNodeToParent(restoredRoot, addParentId, insertIndex)) {
-                            renderNodeAndDescendants(restoredRoot);
-                            actualCount = nodesList.length;
-                refreshView();
-                const nodeCont2 = nodeGraphics.get(restoredRoot.id);
-                            if (nodeCont2) {
-                                selectSingleNode(nodeCont2);
-                                ensureNodeInViewport(nodeCont2);
-                            }
-                        }
-                        isHistoryApplying = false;
-                        updateUndoRedoButtons();
-                    }
-                });
+                return addSiblingNodeAndEdit(currentNode);
             }
             function createNodeUnderParent(parentNode, name, renderNow = false) {
                 if (parentNode.collapsed) parentNode.collapsed = false;
@@ -2134,6 +2067,90 @@
                 nodeGraphics.set(newNode.id, nodeCont);
                 container.addChild(nodeCont);
                 createDomSpanForNode(newNode, width, height, textWidth, textHeight);
+                return newNode;
+            }
+            function syncTreeMutationUi(refreshStats = true) {
+                actualCount = nodesList.length;
+                refreshView();
+                if (refreshStats) refreshTopbarStats();
+                if (typeof updateAddNodeButtons === 'function') {
+                    updateAddNodeButtons();
+                }
+            }
+            function syncTreeLayout() {
+                actualCount = nodesList.length;
+                refreshView();
+            }
+            function refreshUiAfterTreeChange() {
+                syncTreeMutationUi(true);
+            }
+            function focusSingleNodeUi(nodeCont, ensureVisible = true, refreshStats = false) {
+                selectSingleNode(nodeCont, ensureVisible);
+                if (nodeCont && refreshStats) refreshTopbarStats();
+                return nodeCont;
+            }
+            function focusNodeById(nodeId, ensureVisible = true, refreshStats = false) {
+                if (nodeId === null || nodeId === undefined) return null;
+                const nodeCont = nodeGraphics.get(nodeId);
+                return focusSingleNodeUi(nodeCont, ensureVisible, refreshStats);
+            }
+            function focusNodeForEditing(node) {
+                const cont = nodeGraphics.get(node.id);
+                if (!cont) return null;
+                clearAllSelections();
+                selectNode(cont);
+                currentSelectedNode = cont;
+                ensureNodeInViewport(cont);
+                startNodeEdit(node, cont);
+                return cont;
+            }
+            function pushAddNodeCommand(newNode, addParentId, addIndex) {
+                const addSnap = serializeSubtree(newNode);
+                pushCommand({
+                    type: 'add',
+                    node: { id: newNode.id, parentId: addParentId, index: addIndex, serialized: addSnap },
+                    undo: () => {
+                        isHistoryApplying = true;
+                        clearAllSelections();
+                        deleteNodeSubtreeById(newNode.id);
+                        syncTreeMutationUi(true);
+                        isHistoryApplying = false;
+                        updateUndoRedoButtons();
+                    },
+                    redo: () => {
+                        isHistoryApplying = true;
+                        const restoredRoot = restoreSerializedRoot(addSnap, addParentId, addIndex);
+                        if (restoredRoot) {
+                            syncTreeMutationUi(true);
+                            const nodeCont = nodeGraphics.get(restoredRoot.id);
+                            if (nodeCont) {
+                                selectSingleNode(nodeCont, true);
+                            }
+                        }
+                        isHistoryApplying = false;
+                        updateUndoRedoButtons();
+                    }
+                });
+            }
+            // 统一新增节点后的选中、编辑、历史入栈，按钮和快捷键共用。
+            function addChildNodeAndEdit(parentNode) {
+                if (!parentNode) return null;
+                const newNode = createNodeUnderParent(parentNode, '');
+                if (!newNode) return null;
+                syncTreeMutationUi(true);
+                focusNodeForEditing(newNode);
+                pushAddNodeCommand(newNode, parentNode.id, parentNode.children.length - 1);
+                return newNode;
+            }
+            function addSiblingNodeAndEdit(node) {
+                if (!node || node.parentId === null) return null;
+                const newNode = createNodeAsSibling(node, '');
+                if (!newNode) return null;
+                const addParentId = node.parentId;
+                const addIndex = findNodeById(addParentId)?.children.findIndex(c => c.id === newNode.id) ?? 0;
+                syncTreeMutationUi(true);
+                focusNodeForEditing(newNode);
+                pushAddNodeCommand(newNode, addParentId, addIndex);
                 return newNode;
             }
             function unescapeBackticks(text) {
@@ -2246,8 +2263,7 @@
                     }
                 }
                 if (created > 0) {
-                    actualCount = nodesList.length;
-                refreshView();
+                    syncTreeLayout();
                 if (app && app.renderer && app.stage) {
                         tickDOMNodes();
                         app.renderer.render(app.stage);
@@ -2280,20 +2296,10 @@
                             },
                             redo: () => {
                                 isHistoryApplying = true;
-                                for (const snap of rootSnapshots) {
-                                    const restoredList = restoreNodesFromSerialized(snap.serialized);
-                                    const restoredRoot = restoredList[0];
-                                    if (restoredRoot && attachNodeToParent(restoredRoot, snap.parentId, snap.index >= 0 ? snap.index : undefined)) {
-                                        renderNodeAndDescendants(restoredRoot);
-                                    }
-                                }
-                                actualCount = nodesList.length;
-                refreshView();
+                                restoreSerializedRoots(rootSnapshots);
+                                syncTreeLayout();
                 const first = rootSnapshots[0];
-                                const cont = first ? nodeGraphics.get(first.id) : null;
-                                if (cont) {
-                                    selectSingleNode(cont, true);
-                                }
+                                if (first) focusNodeById(first.id, true, false);
                                 isHistoryApplying = false;
                                 updateUndoRedoButtons();
                             }
@@ -2459,16 +2465,10 @@
                         nodesList.splice(i, 1);
                     }
                 }
-                actualCount = nodesList.length;
                 removeNodesGraphicsAndSpans(deleteSet);
-                refreshView();
+                syncTreeLayout();
                 const fallbackCont = nodeGraphics.get(fallbackId) || getRootNode();
-                if (fallbackCont) {
-                    selectNode(fallbackCont);
-                    currentSelectedNode = fallbackCont;
-                    ensureNodeInViewport(fallbackCont);
-                    refreshTopbarStats();
-                }
+                if (fallbackCont) focusSingleNodeUi(fallbackCont, true, true);
                 if (deleteRootSnaps.length > 0) {
                     const redoFallbackId = fallbackId;
                     pushCommand({
@@ -2479,19 +2479,15 @@
                                 .slice()
                                 .sort((a, b) => (a.parentId - b.parentId) || (a.index - b.index));
                             for (const snap of list) {
-                                const restoredList = restoreNodesFromSerialized(snap.serialized);
-                                const restoredRoot = restoredList[0];
-                                if (!restoredRoot) continue;
-                                if (!attachNodeToParent(restoredRoot, snap.parentId, snap.index >= 0 ? snap.index : undefined)) continue;
-                                renderNodeAndDescendants(restoredRoot);
+                                restoreSerializedRoot(
+                                    snap.serialized,
+                                    snap.parentId,
+                                    snap.index >= 0 ? snap.index : undefined
+                                );
                             }
-                            actualCount = nodesList.length;
-                            refreshView();
+                            syncTreeLayout();
                             const first = deleteRootSnaps[0];
-                            const cont = first ? nodeGraphics.get(first.id) : null;
-                            if (cont) {
-                                selectSingleNode(cont, true);
-                            }
+                            if (first) focusNodeById(first.id, true, false);
                         },
                         redo: () => {
                             clearAllSelections();
@@ -2500,11 +2496,7 @@
                                 deleteNodeSubtreeById(deleteRootSnaps[i].id);
                             }
                             const fallback = nodeGraphics.get(redoFallbackId) || getRootNode();
-                            if (fallback) {
-                                selectNode(fallback);
-                                currentSelectedNode = fallback;
-                                ensureNodeInViewport(fallback);
-                            }
+                            if (fallback) focusSingleNodeUi(fallback, true, false);
                         }
                     });
                 }
@@ -2649,8 +2641,7 @@
                     });
                     renderNodeAndDescendants(result.newRoot);
                 }
-                actualCount = nodesList.length;
-                refreshView();
+                syncTreeLayout();
                 if (rootSnapshots.length > 0) {
                     pushCommand({
                         type: 'paste',
@@ -2666,15 +2657,8 @@
                         },
                         redo: () => {
                             isHistoryApplying = true;
-                            for (const snap of rootSnapshots) {
-                                const restoredList = restoreNodesFromSerialized(snap.serialized);
-                                const restoredRoot = restoredList[0];
-                                if (restoredRoot && attachNodeToParent(restoredRoot, snap.parentId, snap.index >= 0 ? snap.index : undefined)) {
-                                    renderNodeAndDescendants(restoredRoot);
-                                }
-                            }
-                            actualCount = nodesList.length;
-                refreshView();
+                            restoreSerializedRoots(rootSnapshots);
+                            syncTreeLayout();
                 isHistoryApplying = false;
                 updateUndoRedoButtons();
                         }
@@ -2710,14 +2694,7 @@
                     result = await pasteTextAsChildren(nodeData, text);
                 }
                 if (result && result.firstCreatedNode) {
-                    const nodeCont = nodeGraphics.get(result.firstCreatedNode.id);
-                    if (nodeCont) {
-                        clearAllSelections();
-                        selectNode(nodeCont);
-                        currentSelectedNode = nodeCont;
-                        ensureNodeInViewport(nodeCont);
-                        refreshTopbarStats();
-                    }
+                    focusNodeById(result.firstCreatedNode.id, true, true);
                 }
             });
             document.addEventListener('copy', (e) => {
@@ -3789,6 +3766,32 @@
                 });
             }
             setupMenus();
+            const closablePanels = [];
+            function showPanel(el) {
+                if (!el) return false;
+                el.classList.remove('panel-hidden');
+                return true;
+            }
+            function hidePanel(el) {
+                if (!el) return false;
+                el.classList.add('panel-hidden');
+                return true;
+            }
+            function bindPanelOpenClose(openTrigger, closeAction, ...closeTriggers) {
+                if (openTrigger) {
+                    openTrigger.addEventListener('click', closeAction.open);
+                }
+                for (const trigger of closeTriggers) {
+                    if (trigger) {
+                        trigger.addEventListener('click', closeAction.close);
+                    }
+                }
+            }
+            function registerClosablePanel(el, close, priority = 0) {
+                if (!el || typeof close !== 'function') return;
+                closablePanels.push({ el, close, priority });
+                closablePanels.sort((a, b) => b.priority - a.priority);
+            }
             const helpModal = document.getElementById('help-modal');
             const helpClose = document.getElementById('help-close');
             const helpBackdrop = helpModal ? helpModal.querySelector('.modal-backdrop') : null;
@@ -3796,60 +3799,33 @@
             const aboutClose = document.getElementById('about-close');
             const aboutBackdrop = aboutModal ? aboutModal.querySelector('.modal-backdrop') : null;
             function openHelp() {
-                if (!helpModal) return;
-                helpModal.classList.remove('panel-hidden');
+                showPanel(helpModal);
             }
             function closeHelp() {
-                if (!helpModal) return;
-                helpModal.classList.add('panel-hidden');
-            }
-            if (helpBtn) {
-                helpBtn.addEventListener('click', openHelp);
-            }
-            if (helpClose) {
-                helpClose.addEventListener('click', closeHelp);
-            }
-            if (helpBackdrop) {
-                helpBackdrop.addEventListener('click', closeHelp);
+                hidePanel(helpModal);
             }
             const apiHelpBtn = document.getElementById('api-help-btn');
             const apiHelpModal = document.getElementById('api-help-modal');
             const apiHelpClose = document.getElementById('api-help-close');
             const apiHelpBackdrop = apiHelpModal ? apiHelpModal.querySelector('.modal-backdrop') : null;
             function openApiHelp() {
-                if (!apiHelpModal) return;
-                apiHelpModal.classList.remove('panel-hidden');
+                showPanel(apiHelpModal);
             }
             function closeApiHelp() {
-                if (!apiHelpModal) return;
-                apiHelpModal.classList.add('panel-hidden');
-            }
-            if (apiHelpBtn) {
-                apiHelpBtn.addEventListener('click', openApiHelp);
-            }
-            if (apiHelpClose) {
-                apiHelpClose.addEventListener('click', closeApiHelp);
-            }
-            if (apiHelpBackdrop) {
-                apiHelpBackdrop.addEventListener('click', closeApiHelp);
+                hidePanel(apiHelpModal);
             }
             function openAbout() {
-                if (!aboutModal) return;
-                aboutModal.classList.remove('panel-hidden');
+                showPanel(aboutModal);
             }
             function closeAbout() {
-                if (!aboutModal) return;
-                aboutModal.classList.add('panel-hidden');
+                hidePanel(aboutModal);
             }
-            if (aboutBtn) {
-                aboutBtn.addEventListener('click', openAbout);
-            }
-            if (aboutClose) {
-                aboutClose.addEventListener('click', closeAbout);
-            }
-            if (aboutBackdrop) {
-                aboutBackdrop.addEventListener('click', closeAbout);
-            }
+            bindPanelOpenClose(helpBtn, { open: openHelp, close: closeHelp }, helpClose, helpBackdrop);
+            bindPanelOpenClose(apiHelpBtn, { open: openApiHelp, close: closeApiHelp }, apiHelpClose, apiHelpBackdrop);
+            bindPanelOpenClose(aboutBtn, { open: openAbout, close: closeAbout }, aboutClose, aboutBackdrop);
+            registerClosablePanel(helpModal, closeHelp, 40);
+            registerClosablePanel(apiHelpModal, closeApiHelp, 30);
+            registerClosablePanel(aboutModal, closeAbout, 20);
             let searchMatches = [];
             let searchMatchIndex = -1;
             let lastSearchQuery = '';
@@ -3867,8 +3843,7 @@
                 searchIgnoreCaseBtn.classList.toggle('active', !!searchIgnoreCase.checked);
             }
             function openSearchPanel() {
-                if (!searchPanel) return;
-                searchPanel.classList.remove('panel-hidden');
+                if (!showPanel(searchPanel)) return;
                 if (searchInput) {
                     searchInput.focus();
                     searchInput.select();
@@ -3878,9 +3853,9 @@
                 updateSearchMatches(true);
             }
             function closeSearchPanel() {
-                if (!searchPanel) return;
-                searchPanel.classList.add('panel-hidden');
+                hidePanel(searchPanel);
             }
+            registerClosablePanel(searchPanel, closeSearchPanel, 10);
             function expandAncestorsToReveal(nodeId) {
                 const nodeById = buildNodeByIdMap();
                 let node = nodeById.get(nodeId);
@@ -4156,8 +4131,7 @@
                     }
                 });
                 for (const c of changes) setNodeNameFast(c.id, c.to);
-                refreshView();
-                refreshTopbarStats();
+                refreshUiAfterTreeChange();
                 updateSearchMatches(true);
             }
             if (searchBtn) {
@@ -4237,12 +4211,8 @@
                 });
             }
             function reloadWithDataset(next) {
-                try {
-                    const mm = document.getElementById('minimap');
-                    if (mm) localStorage.setItem('mm_minimap_hidden', mm.classList.contains('panel-hidden') ? '1' : '0');
-                    const zc = document.getElementById('zoom-control');
-                    if (zc) localStorage.setItem('mm_zoom_hidden', zc.classList.contains('panel-hidden') ? '1' : '0');
-                } catch (e) {}
+                persistPanelHiddenState('minimap', 'mm_minimap_hidden');
+                persistPanelHiddenState('zoom-control', 'mm_zoom_hidden');
                 const url = new URL(window.location.href);
                 if (!next || next === 'perf') {
                     url.searchParams.set('dataset', 'perf');
@@ -4262,16 +4232,14 @@
                 toggleZoomBtn.addEventListener('click', () => {
                     const el = document.getElementById('zoom-control');
                     if (!el) return;
-                    el.classList.toggle('panel-hidden');
-                    try { localStorage.setItem('mm_zoom_hidden', el.classList.contains('panel-hidden') ? '1' : '0'); } catch (e) {}
+                    setPanelHiddenState('zoom-control', 'mm_zoom_hidden', !el.classList.contains('panel-hidden'));
                 });
             }
             if (toggleMinimapBtn) {
                 toggleMinimapBtn.addEventListener('click', () => {
                     const el = document.getElementById('minimap');
                     if (!el) return;
-                    el.classList.toggle('panel-hidden');
-                    try { localStorage.setItem('mm_minimap_hidden', el.classList.contains('panel-hidden') ? '1' : '0'); } catch (e) {}
+                    setPanelHiddenState('minimap', 'mm_minimap_hidden', !el.classList.contains('panel-hidden'));
                     minimapDirty = true;
                     updateMinimapViewport();
                 });
@@ -4478,8 +4446,7 @@
                     updateTitle();
                     const rootNode = getRootNode();
                     if (rootNode) {
-                        selectSingleNode(rootNode);
-                        ensureNodeInViewport(rootNode);
+                        focusSingleNodeUi(rootNode, true, false);
                     }
                 } catch (err) {
                     alert('加载文件失败: ' + err.message);
@@ -4606,107 +4573,13 @@
                 if (!currentSelectedNode) return;
                 const nodeId = currentSelectedNode._nodeData.nodeId;
                 const parentNode = findNodeById(nodeId);
-                if (!parentNode) return;
-                const newNode = createNodeUnderParent(parentNode, '');
-                if (newNode) {
-                    actualCount = nodesList.length;
-                    refreshView();
-                    refreshTopbarStats();
-                    updateAddNodeButtons();
-                    const cont = nodeGraphics.get(newNode.id);
-                    if (cont) {
-                        clearAllSelections();
-                        selectNode(cont);
-                        currentSelectedNode = cont;
-                        ensureNodeInViewport(cont);
-                        startNodeEdit(newNode, cont);
-                    }
-                    const addSnap = serializeSubtree(newNode);
-                    const addParentId = parentNode.id;
-                    const addIndex = parentNode.children.length - 1;
-                    pushCommand({
-                        type: 'add',
-                        node: { id: newNode.id, parentId: addParentId, index: addIndex, serialized: addSnap },
-                        undo: () => {
-                            isHistoryApplying = true;
-                            clearAllSelections();
-                            deleteNodeSubtreeById(newNode.id);
-                            refreshView();
-                            refreshTopbarStats();
-                            updateUndoRedoButtons();
-                        },
-                        redo: () => {
-                            isHistoryApplying = true;
-                            const restoredList = restoreNodesFromSerialized(addSnap);
-                            const restoredRoot = restoredList[0];
-                            if (restoredRoot && attachNodeToParent(restoredRoot, addParentId, addIndex)) {
-                                renderNodeAndDescendants(restoredRoot);
-                                actualCount = nodesList.length;
-                                refreshView();
-                                refreshTopbarStats();
-                                const nodeCont2 = nodeGraphics.get(restoredRoot.id);
-                                if (nodeCont2) {
-                                    selectSingleNode(nodeCont2, true);
-                                }
-                            }
-                            isHistoryApplying = false;
-                            updateUndoRedoButtons();
-                        }
-                    });
-                }
+                addChildNodeAndEdit(parentNode);
             }
             function handleAddSibling() {
                 if (!currentSelectedNode) return;
                 const nodeId = currentSelectedNode._nodeData.nodeId;
                 const node = findNodeById(nodeId);
-                if (!node || node.parentId === null) return;
-                const newNode = createNodeAsSibling(node, '');
-                if (newNode) {
-                    actualCount = nodesList.length;
-                    refreshView();
-                    refreshTopbarStats();
-                    updateAddNodeButtons();
-                    const cont = nodeGraphics.get(newNode.id);
-                    if (cont) {
-                        clearAllSelections();
-                        selectNode(cont);
-                        currentSelectedNode = cont;
-                        ensureNodeInViewport(cont);
-                        startNodeEdit(newNode, cont);
-                    }
-                    const addSnap = serializeSubtree(newNode);
-                    const addParentId = node.parentId;
-                    const addIndex = findNodeById(addParentId)?.children.findIndex(c => c.id === newNode.id) ?? 0;
-                    pushCommand({
-                        type: 'add',
-                        node: { id: newNode.id, parentId: addParentId, index: addIndex, serialized: addSnap },
-                        undo: () => {
-                            isHistoryApplying = true;
-                            clearAllSelections();
-                            deleteNodeSubtreeById(newNode.id);
-                            refreshView();
-                            refreshTopbarStats();
-                            updateUndoRedoButtons();
-                        },
-                        redo: () => {
-                            isHistoryApplying = true;
-                            const restoredList = restoreNodesFromSerialized(addSnap);
-                            const restoredRoot = restoredList[0];
-                            if (restoredRoot && attachNodeToParent(restoredRoot, addParentId, addIndex)) {
-                                renderNodeAndDescendants(restoredRoot);
-                                actualCount = nodesList.length;
-                                refreshView();
-                                refreshTopbarStats();
-                                const nodeCont2 = nodeGraphics.get(restoredRoot.id);
-                                if (nodeCont2) {
-                                    selectSingleNode(nodeCont2, true);
-                                }
-                            }
-                            isHistoryApplying = false;
-                            updateUndoRedoButtons();
-                        }
-                    });
-                }
+                addSiblingNodeAndEdit(node);
             }
             if (addChildBtn) addChildBtn.addEventListener('click', handleAddChild);
             if (addSiblingBtn) addSiblingBtn.addEventListener('click', handleAddSibling);
@@ -4896,11 +4769,10 @@
                         exportFilename.value = node.name;
                     }
                 }
-                exportModal.classList.remove('panel-hidden');
+                showPanel(exportModal);
             }
             function closeExportModal() {
-                if (!exportModal) return;
-                exportModal.classList.add('panel-hidden');
+                hidePanel(exportModal);
             }
             function updateExportPreview() {
                 const baseLevel = parseInt(exportLevel.value) || 3;
@@ -4931,9 +4803,6 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
             }
-            if (exportMdBtn) {
-                exportMdBtn.addEventListener('click', openExportModal);
-            }
             if (exportSvgBtn) {
                 exportSvgBtn.addEventListener('click', async (e) => {
                     e.preventDefault();
@@ -4941,12 +4810,8 @@
                     await exportToSvg();
                 });
             }
-            if (exportClose) {
-                exportClose.addEventListener('click', closeExportModal);
-            }
-            if (exportBackdrop) {
-                exportBackdrop.addEventListener('click', closeExportModal);
-            }
+            bindPanelOpenClose(exportMdBtn, { open: openExportModal, close: closeExportModal }, exportClose, exportBackdrop);
+            registerClosablePanel(exportModal, closeExportModal, 50);
             if (exportLevel) {
                 exportLevel.addEventListener('change', updateExportPreview);
             }
@@ -5008,11 +4873,10 @@
                 if (!importModal) return;
                 importContent.value = '';
                 importLevel.value = '4';
-                importModal.classList.remove('panel-hidden');
+                showPanel(importModal);
             }
             function closeImportModal() {
-                if (!importModal) return;
-                importModal.classList.add('panel-hidden');
+                hidePanel(importModal);
             }
             function handleImport() {
                 const mdContent = importContent.value.trim();
@@ -5032,9 +4896,7 @@
                     return;
                 }
                 let createdRoots = createNodesFromTree(tree, currentNodeData, currentNodeData.level);
-                actualCount = nodesList.length;
-                refreshView();
-                refreshTopbarStats();
+                refreshUiAfterTreeChange();
                 const createdRootIds = createdRoots.map(r => r.id);
                 const rootSnapshots = [];
                 for (const rid of createdRootIds) {
@@ -5055,55 +4917,29 @@
                         for (const snap of rootSnapshots) {
                             deleteNodeSubtreeById(snap.id);
                         }
-                        actualCount = nodesList.length;
-                        refreshView();
-                        refreshTopbarStats();
+                        refreshUiAfterTreeChange();
                         isHistoryApplying = false;
                         updateUndoRedoButtons();
                     },
                     redo: () => {
                         isHistoryApplying = true;
-                        for (const snap of rootSnapshots) {
-                            const restoredList = restoreNodesFromSerialized(snap.serialized);
-                            const restoredRoot = restoredList[0];
-                            if (restoredRoot && attachNodeToParent(restoredRoot, snap.parentId, snap.index >= 0 ? snap.index : undefined)) {
-                                renderNodeAndDescendants(restoredRoot);
-                            }
-                        }
-                        actualCount = nodesList.length;
-                        refreshView();
-                        refreshTopbarStats();
+                        restoreSerializedRoots(rootSnapshots);
+                        refreshUiAfterTreeChange();
                         isHistoryApplying = false;
                         updateUndoRedoButtons();
                     }
                 });
                 closeImportModal();
                 if (createdRoots.length > 0) {
-                    const firstCont = nodeGraphics.get(createdRoots[0].id);
-                    if (firstCont) {
-                        clearAllSelections();
-                        selectNode(firstCont);
-                        currentSelectedNode = firstCont;
-                        ensureNodeInViewport(firstCont);
-                    }
+                    focusNodeById(createdRoots[0].id, true, false);
                 }
             }
             function updateImportButton() {
                 const hasSelection = selectedNodeIds && selectedNodeIds.size > 0;
                 if (importMdBtn) importMdBtn.disabled = !hasSelection;
             }
-            if (importMdBtn) {
-                importMdBtn.addEventListener('click', openImportModal);
-            }
-            if (importClose) {
-                importClose.addEventListener('click', closeImportModal);
-            }
-            if (importBackdrop) {
-                importBackdrop.addEventListener('click', closeImportModal);
-            }
-            if (importCancelBtn) {
-                importCancelBtn.addEventListener('click', closeImportModal);
-            }
+            bindPanelOpenClose(importMdBtn, { open: openImportModal, close: closeImportModal }, importClose, importBackdrop, importCancelBtn);
+            registerClosablePanel(importModal, closeImportModal, 60);
             if (importConfirmBtn) {
                 importConfirmBtn.addEventListener('click', handleImport);
             }
@@ -5117,16 +4953,11 @@
             document.addEventListener('keydown', (e) => {
                 if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
                 if (e.key !== 'Escape') return;
-                const modalStack = [
-                    [importModal, closeImportModal],
-                    [exportModal, closeExportModal],
-                    [helpModal, closeHelp],
-                    [apiHelpModal, closeApiHelp],
-                    [aboutModal, closeAbout],
-                    [searchPanel, closeSearchPanel],
-                ];
-                for (const [el, close] of modalStack) {
-                    if (el && !el.classList.contains('panel-hidden')) { close(); return; }
+                for (const panel of closablePanels) {
+                    if (panel.el && !panel.el.classList.contains('panel-hidden')) {
+                        panel.close();
+                        return;
+                    }
                 }
             });
             updateImportButton();
@@ -5482,13 +5313,11 @@
                         const newNode = new MindNode(nextNodeId++, name, parentId, parent.level + 1);
                         parent.children.push(newNode);
                         nodesList.push(newNode);
-                        actualCount = nodesList.length;
                         const { container: nodeCont, width, height, textWidth, textHeight } = createNodeGraphics(newNode);
                         nodeGraphics.set(newNode.id, nodeCont);
                         container.addChild(nodeCont);
                         createDomSpanForNode(newNode, width, height, textWidth, textHeight);
-                        refreshView();
-                        refreshTopbarStats();
+                        refreshUiAfterTreeChange();
                         return newNode;
                     }
                     return null;
