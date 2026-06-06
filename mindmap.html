@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -397,7 +398,7 @@
             </div>
             <div class="modal-body">
                 <div class="about-content">
-                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v2.1</span></div>
+                    <div><span class="modal-label label-inline">版本号：</span><span class="mono">v2.2</span></div>
                     <div><span class="modal-label label-inline">作者：</span><span>Jack（<a href="mailto:topcss@gmail.com">topcss@gmail.com</a>）</span></div>
                     <div class="modal-divider"></div>
                     <div>
@@ -863,6 +864,7 @@
             const HOVER_FRAME_ALPHA = 0.85;
             const HOVER_FRAME_WIDTH = 2;
             const HOVER_FRAME_PAD = 6;
+            let activeHoverFrameCont = null;
             function updateHoverFrameForContainer(cont) {
                 if (!cont || !cont._nodeData) return;
                 const frame = cont._nodeData.hoverFrame;
@@ -880,6 +882,21 @@
                 const frame = cont._nodeData.hoverFrame;
                 if (!frame) return;
                 frame.visible = !!visible;
+            }
+            function clearActiveHoverFrame(cont) {
+                const target = cont || activeHoverFrameCont;
+                if (!target) return;
+                setHoverFrameVisible(target, false);
+                if (!cont || activeHoverFrameCont === cont) activeHoverFrameCont = null;
+            }
+            function showExclusiveHoverFrame(cont) {
+                if (editingInput) return;
+                if (!cont) return;
+                if (activeHoverFrameCont && activeHoverFrameCont !== cont) {
+                    setHoverFrameVisible(activeHoverFrameCont, false);
+                }
+                activeHoverFrameCont = cont;
+                setHoverFrameVisible(cont, true);
             }
             function applyStyleAndMeasure(node) {
                 const cont = nodeGraphics.get(node.id);
@@ -915,11 +932,9 @@
                     if (!span._maxWidth) span._maxWidth = 520;
                     const textScale = getCurrentTextScale();
                     if (textScale && textScale > 0) {
-                        const dpr = window.devicePixelRatio || 1;
-                        const snap = (v) => Math.round(v * dpr) / dpr;
-                        span.style.fontSize = `${snap(style.fontSize * textScale)}px`;
-                        span.style.lineHeight = `${snap(style.fontSize * 1.4 * textScale)}px`;
-                        span.style.maxWidth = `${snap(span._maxWidth * textScale)}px`;
+                        span.style.fontSize = `${style.fontSize * textScale}px`;
+                        span.style.lineHeight = `${style.fontSize * 1.4 * textScale}px`;
+                        span.style.maxWidth = `${span._maxWidth * textScale}px`;
                     } else {
                         span.style.fontSize = `${style.fontSize}px`;
                         span.style.lineHeight = `${style.fontSize * 1.4}px`;
@@ -1270,8 +1285,8 @@
             let editingInput = null;
             let lastClickTime = 0;
             let lastClickNode = null;
-            let textMeasureCanvas = null;
-            let textMeasureCtx = null;
+            let textMeasureHost = null;
+            let textMeasureEl = null;
             const textMeasureCache = new Map();
             function measureNodeText(style, text, maxWidth = 520) {
                 const fontWeight = style && style.fontWeight ? style.fontWeight : 400;
@@ -1282,66 +1297,45 @@
                 const cacheKey = `${fontWeight}|${fontSize}|${paddingX}|${paddingY}|${maxWidth}|${content}`;
                 const cached = textMeasureCache.get(cacheKey);
                 if (cached) return cached;
-                if (!textMeasureCanvas) {
-                    textMeasureCanvas = document.createElement('canvas');
-                    textMeasureCtx = textMeasureCanvas.getContext('2d', { alpha: true });
+                if (!textMeasureHost) {
+                    textMeasureHost = document.createElement('div');
+                    textMeasureHost.style.cssText = `
+                        position: fixed;
+                        left: -100000px;
+                        top: -100000px;
+                        visibility: hidden;
+                        pointer-events: none;
+                        z-index: -1;
+                    `;
+                    textMeasureEl = document.createElement('span');
+                    textMeasureEl.style.cssText = `
+                        display: inline-block;
+                        width: max-content;
+                        margin: 0;
+                        padding: 0;
+                        border: none;
+                        white-space: pre-wrap;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        box-sizing: border-box;
+                    `;
+                    textMeasureHost.appendChild(textMeasureEl);
+                    document.body.appendChild(textMeasureHost);
                 }
-                const ctx = textMeasureCtx;
                 const fontFamily = `Segoe UI, "PingFang SC", Roboto, "Helvetica Neue", sans-serif`;
-                ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
                 const lineHeight = fontSize * 1.4;
-                const lines = [];
-                const pushWrappedParagraph = (para) => {
-                    if (para.length === 0) {
-                        lines.push('');
-                        return;
-                    }
-                    const fullW = ctx.measureText(para).width;
-                    if (fullW <= maxWidth) {
-                        lines.push(para);
-                        return;
-                    }
-                    const hasSpace = /\s/.test(para);
-                    if (hasSpace) {
-                        const tokens = para.split(/(\s+)/);
-                        let cur = '';
-                        for (const t of tokens) {
-                            if (t.length === 0) continue;
-                            const next = cur + t;
-                            if (cur.length > 0 && ctx.measureText(next).width > maxWidth) {
-                                lines.push(cur.replace(/\s+$/g, ''));
-                                cur = t.replace(/^\s+/g, '');
-                            } else {
-                                cur = next;
-                            }
-                        }
-                        if (cur.length > 0) lines.push(cur.replace(/\s+$/g, ''));
-                        return;
-                    }
-                    let cur = '';
-                    for (const ch of para) {
-                        const next = cur + ch;
-                        if (cur.length > 0 && ctx.measureText(next).width > maxWidth) {
-                            lines.push(cur);
-                            cur = ch;
-                        } else {
-                            cur = next;
-                        }
-                    }
-                    if (cur.length > 0) lines.push(cur);
-                };
-                const paras = (content.length > 0 ? content : ' ').split('\n');
-                for (const p of paras) pushWrappedParagraph(p);
-                let maxLineW = 0;
-                for (const l of lines) {
-                    const w = ctx.measureText(l.length > 0 ? l : ' ').width;
-                    if (w > maxLineW) maxLineW = w;
-                }
-                const textWidth = Math.min(maxLineW, maxWidth);
-                const textHeight = Math.max(1, lines.length) * lineHeight;
+                textMeasureEl.style.fontFamily = fontFamily;
+                textMeasureEl.style.fontWeight = String(fontWeight);
+                textMeasureEl.style.fontSize = `${fontSize}px`;
+                textMeasureEl.style.lineHeight = `${lineHeight}px`;
+                textMeasureEl.style.maxWidth = `${maxWidth}px`;
+                textMeasureEl.textContent = content.length > 0 ? content : ' ';
+                const rect = textMeasureEl.getBoundingClientRect();
+                const textWidth = Math.min(Math.ceil(rect.width), maxWidth);
+                const textHeight = Math.max(Math.ceil(rect.height), Math.ceil(lineHeight));
                 const width = Math.min(textWidth + paddingX * 2, maxWidth + paddingX * 2);
                 const height = textHeight + paddingY * 2;
-                const totalLines = Math.max(1, lines.length);
+                const totalLines = Math.max(1, Math.round(textHeight / lineHeight));
                 const result = { width, height, textWidth, textHeight, totalLines };
                 if (textMeasureCache.size > 30000) {
                     const firstKey = textMeasureCache.keys().next().value;
@@ -1354,6 +1348,7 @@
                 if (editingInput) {
                     finishNodeEdit();
                 }
+                clearActiveHoverFrame();
                 const worldPos = containerItem.getGlobalPosition();
                 const scale = container.scale.x;
                 const nodeData = containerItem._nodeData;
@@ -1367,36 +1362,43 @@
                 const uiScaleY = scale * scaleToClientY;
                 const textarea = document.createElement('textarea');
                 textarea.value = node.name;
+                const borderPx = 1.5 * uiScaleX;
+                const outerWidthPx = nodeData.width * uiScaleX + borderPx * 2;
+                const outerHeightPx = nodeData.height * uiScaleY + borderPx * 2;
                 const maxHeightPx = Math.max(nodeData.height * uiScaleY, Math.max(120, Math.min(rect.height * 0.6, rect.height - 40)));
                 textarea.style.cssText = `
-                    position: absolute;
+                    position: fixed;
                     font-family: Segoe UI, "PingFang SC", Roboto, "Helvetica Neue", sans-serif;
                     font-weight: ${nodeData.style.fontWeight};
                     font-size: ${nodeData.style.fontSize * uiScaleX}px;
                     color: ${nodeData.style.textColor};
                     background: ${hexColor(nodeData.style.bgColor)};
-                    border: 1.5px solid ${hexColor(nodeData.style.borderColor)};
+                    border: ${borderPx}px solid ${hexColor(nodeData.style.borderColor)};
                     border-radius: ${nodeData.style.radius * uiScaleX}px;
                     padding: ${nodeData.style.paddingY * uiScaleY}px ${nodeData.style.paddingX * uiScaleX}px;
+                    box-sizing: border-box;
                     outline: none;
                     cursor: text;
                     z-index: 1000;
                     white-space: pre-wrap;
                     word-wrap: break-word;
+                    overflow-wrap: break-word;
                     overflow: hidden;
                     resize: none;
                     box-shadow: none;
+                    margin: 0;
                     line-height: ${nodeData.style.fontSize * 1.4 * uiScaleX}px;
-                    min-width: ${nodeData.width * uiScaleX}px;
-                    min-height: ${nodeData.height * uiScaleY}px;
-                    max-width: ${(maxWidth + nodeData.style.paddingX * 2) * uiScaleX}px;
-                    max-height: ${maxHeightPx}px;
+                    min-width: ${outerWidthPx}px;
+                    min-height: ${outerHeightPx}px;
+                    max-width: ${(maxWidth + nodeData.style.paddingX * 2) * uiScaleX + borderPx * 2}px;
+                    max-height: ${maxHeightPx + borderPx * 2}px;
                 `;
                 const { x: screenX, y: screenY } = canvasToClientPoint(worldPos.x, worldPos.y);
-                textarea.style.left = `${screenX - (nodeData.width * uiScaleX) / 2}px`;
-                textarea.style.top = `${screenY - (nodeData.height * uiScaleY) / 2}px`;
-                textarea.style.width = `${nodeData.width * uiScaleX}px`;
-                textarea.style.height = `${nodeData.height * uiScaleY}px`;
+                const anchorLeftPx = screenX - (nodeData.width * uiScaleX) / 2 - borderPx;
+                textarea.style.left = `${anchorLeftPx}px`;
+                textarea.style.top = `${screenY - outerHeightPx / 2}px`;
+                textarea.style.width = `${outerWidthPx}px`;
+                textarea.style.height = `${outerHeightPx}px`;
                 document.body.appendChild(textarea);
                 editingInput = { input: textarea, node, containerItem, baseWidth, baseHeight };
                 textarea.focus();
@@ -1405,12 +1407,12 @@
                     const measured = measureNodeText(nodeData.style, textarea.value, maxWidth);
                     const newWidth = Math.max(baseWidth, measured.width);
                     const newHeight = Math.max(baseHeight, measured.height);
-                    const widthPx = newWidth * uiScaleX;
-                    const heightPx = Math.min(newHeight * uiScaleY, maxHeightPx);
-                    textarea.style.width = `${widthPx}px`;
-                    textarea.style.height = `${heightPx}px`;
-                    textarea.style.left = `${screenX - widthPx / 2}px`;
-                    textarea.style.top = `${screenY - heightPx / 2}px`;
+                    const nextOuterWidthPx = newWidth * uiScaleX + borderPx * 2;
+                    const nextOuterHeightPx = Math.min(newHeight * uiScaleY, maxHeightPx) + borderPx * 2;
+                    textarea.style.width = `${nextOuterWidthPx}px`;
+                    textarea.style.height = `${nextOuterHeightPx}px`;
+                    textarea.style.left = `${anchorLeftPx}px`;
+                    textarea.style.top = `${screenY - nextOuterHeightPx / 2}px`;
                     textarea.style.overflow = (newHeight * uiScaleY > maxHeightPx) ? 'auto' : 'hidden';
                 });
                 textarea.addEventListener('keydown', (e) => {
@@ -1441,27 +1443,31 @@
                 const measured = measureNodeText(nodeData.style, input.value, maxWidth);
                 const newWidth = Math.max(baseWidth, measured.width);
                 const newHeight = Math.max(baseHeight, measured.height);
-                const widthPx = newWidth * uiScaleX;
-                const heightPx = Math.min(newHeight * uiScaleY, maxHeightPx);
+                const borderPx = 1.5 * uiScaleX;
+                const widthPx = newWidth * uiScaleX + borderPx * 2;
+                const heightPx = Math.min(newHeight * uiScaleY, maxHeightPx) + borderPx * 2;
                 const { x: screenX, y: screenY } = canvasToClientPoint(worldPos.x, worldPos.y);
-                input.style.left = `${screenX - widthPx / 2}px`;
+                const anchorLeftPx = screenX - (nodeData.width * uiScaleX) / 2 - borderPx;
+                input.style.left = `${anchorLeftPx}px`;
                 input.style.top = `${screenY - heightPx / 2}px`;
                 input.style.width = `${widthPx}px`;
                 input.style.height = `${heightPx}px`;
                 input.style.fontSize = `${nodeData.style.fontSize * uiScaleX}px`;
                 input.style.lineHeight = `${nodeData.style.fontSize * 1.4 * uiScaleX}px`;
                 input.style.padding = `${nodeData.style.paddingY * uiScaleY}px ${nodeData.style.paddingX * uiScaleX}px`;
+                input.style.borderWidth = `${borderPx}px`;
                 input.style.borderRadius = `${nodeData.style.radius * uiScaleX}px`;
-                input.style.minWidth = `${nodeData.width * uiScaleX}px`;
-                input.style.minHeight = `${nodeData.height * uiScaleY}px`;
-                input.style.maxWidth = `${(maxWidth + nodeData.style.paddingX * 2) * uiScaleX}px`;
-                input.style.maxHeight = `${maxHeightPx}px`;
+                input.style.minWidth = `${nodeData.width * uiScaleX + borderPx * 2}px`;
+                input.style.minHeight = `${nodeData.height * uiScaleY + borderPx * 2}px`;
+                input.style.maxWidth = `${(maxWidth + nodeData.style.paddingX * 2) * uiScaleX + borderPx * 2}px`;
+                input.style.maxHeight = `${maxHeightPx + borderPx * 2}px`;
                 input.style.overflow = (newHeight * uiScaleY > maxHeightPx) ? 'auto' : 'hidden';
             }
             function finishNodeEdit() {
                 if (!editingInput) return;
                 const currentEdit = editingInput;
                 editingInput = null;
+                clearActiveHoverFrame();
                 const { input, node, containerItem, baseWidth, baseHeight } = currentEdit;
                 const newName = input.value.trim();
                 if (newName && newName !== node.name) {
@@ -1528,6 +1534,7 @@
                 if (!editingInput) return;
                 const currentEdit = editingInput;
                 editingInput = null;
+                clearActiveHoverFrame();
                 try {
                     if (currentEdit.input && currentEdit.input.parentNode) currentEdit.input.parentNode.removeChild(currentEdit.input);
                 } catch (e) {}
@@ -1780,6 +1787,7 @@
                     color: ${style.textColor};
                     white-space: pre-wrap;
                     word-wrap: break-word;
+                    overflow-wrap: break-word;
                     max-width: ${maxWidth}px;
                     pointer-events: none;
                     user-select: none;
@@ -1801,11 +1809,9 @@
                 span._maxWidth = maxWidth;
                 const textScale = domBatchActive ? domBatchTextScale : getCurrentTextScale();
                 if (textScale && textScale > 0) {
-                    const dpr = window.devicePixelRatio || 1;
-                    const snap = (v) => Math.round(v * dpr) / dpr;
-                    span.style.fontSize = `${snap(span._baseFontSize * textScale)}px`;
-                    span.style.lineHeight = `${snap(span._baseFontSize * 1.4 * textScale)}px`;
-                    span.style.maxWidth = `${snap(span._maxWidth * textScale)}px`;
+                    span.style.fontSize = `${span._baseFontSize * textScale}px`;
+                    span.style.lineHeight = `${span._baseFontSize * 1.4 * textScale}px`;
+                    span.style.maxWidth = `${span._maxWidth * textScale}px`;
                 }
                 if (domBatchActive && domBatchFragment) {
                     domBatchFragment.appendChild(span);
@@ -3501,9 +3507,9 @@
                         span.style.top = `${ty}px`;
                     }
                     if (scaleChanged || wasHidden) {
-                        span.style.fontSize = `${snap(span._baseFontSize * textScale)}px`;
-                        span.style.lineHeight = `${snap(span._baseFontSize * 1.4 * textScale)}px`;
-                        span.style.maxWidth = `${snap(span._maxWidth * textScale)}px`;
+                        span.style.fontSize = `${span._baseFontSize * textScale}px`;
+                        span.style.lineHeight = `${span._baseFontSize * 1.4 * textScale}px`;
+                        span.style.maxWidth = `${span._maxWidth * textScale}px`;
                     }
                 }
                 lastDomContainerX = container.x;
@@ -3575,13 +3581,17 @@
                     startNodeDragIfAllowed(node);
                 });
                 containerItem.on('pointerover', () => {
-                    setHoverFrameVisible(containerItem, true);
+                    if (editingInput) {
+                        clearActiveHoverFrame();
+                        return;
+                    }
+                    showExclusiveHoverFrame(containerItem);
                     if (node.children && node.children.length > 0) {
                         setCollapseHoverNode(node.id);
                     }
                 });
                 containerItem.on('pointerout', () => {
-                    setHoverFrameVisible(containerItem, false);
+                    clearActiveHoverFrame(containerItem);
                     if (node.children && node.children.length > 0) {
                         clearCollapseHoverNodeDelayed(node.id);
                     }
@@ -3730,6 +3740,11 @@
                 isModified = value;
                 updateTitle();
             }
+            function closeAllMenus() {
+                document.querySelectorAll('.menu-dropdown').forEach(d => {
+                    d.classList.remove('show');
+                });
+            }
             function setupMenus() {
                 const menuContainers = document.querySelectorAll('.menu-container');
                 let ignoreNextClick = false;
@@ -3741,9 +3756,7 @@
                         e.preventDefault();
                         ignoreNextClick = true;
                         const isVisible = dropdown.classList.contains('show');
-                        document.querySelectorAll('.menu-dropdown').forEach(d => {
-                            d.classList.remove('show');
-                        });
+                        closeAllMenus();
                         if (!isVisible) {
                             dropdown.classList.add('show');
                         }
@@ -3754,14 +3767,12 @@
                 });
                 document.addEventListener('click', (e) => {
                     if (ignoreNextClick) return;
-                    document.querySelectorAll('.menu-dropdown').forEach(d => {
-                        d.classList.remove('show');
-                    });
+                    closeAllMenus();
                 });
                 document.querySelectorAll('.menu-dropdown').forEach(dropdown => {
                     dropdown.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        dropdown.classList.remove('show');
+                        closeAllMenus();
                     });
                 });
             }
@@ -4683,26 +4694,20 @@
                     const h = node._height || 50;
                     const x = node.x - w / 2 + offsetX;
                     const y = node.y - h / 2 + offsetY;
-                    const borderRadius = 8;
-                    let bgColor = getCssColor('--node-default-bg', true);
-                    let borderColor = getCssColor('--node-default-border', true);
-                    let textColor = getCssColor('--node-default-text', true);
-                    if (node.parentId === null) {
-                        bgColor = getCssColor('--node-root-bg', true);
-                        borderColor = getCssColor('--node-root-border', true);
-                        textColor = getCssColor('--node-root-text', true);
-                    } else {
-                        const depth = getNodeDepth(node, nodeById);
-                        if (depth === 1) {
-                            bgColor = getCssColor('--node-level1-bg', true);
-                            borderColor = getCssColor('--node-level1-border', true);
-                            textColor = getCssColor('--node-level1-text', true);
-                        }
-                    }
+                    const isRoot = node.parentId === null;
+                    const style = getStyleForLevel(node.level, isRoot);
+                    const borderRadius = style.radius;
+                    const bgColor = hexColor(style.bgColor);
+                    const borderColor = hexColor(style.borderColor);
+                    const textColor = hexColor(style.textColor);
+                    const textX = x + style.paddingX;
+                    const textY = y + style.paddingY;
+                    const textW = Math.max(1, w - style.paddingX * 2);
+                    const textH = Math.max(1, h - style.paddingY * 2);
                     nodes += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${borderRadius}" ry="${borderRadius}" fill="${bgColor}" stroke="${borderColor}" stroke-width="2"/>`;
-                    const fontSize = node.parentId === null ? 18 : 14;
-                    const fontWeight = node.parentId === null ? 'bold' : 'normal';
-                    nodes += `<text x="${x + w/2}" y="${y + h/2 + fontSize/3}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${textColor}" text-anchor="middle" font-family="Microsoft YaHei, sans-serif">${escapeHtml(node.name)}</text>`;
+                    nodes += `<foreignObject x="${textX}" y="${textY}" width="${textW}" height="${textH}">` +
+                        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${textW}px;height:${textH}px;margin:0;padding:0;overflow:hidden;color:${textColor};font-family:Segoe UI,'PingFang SC',Roboto,'Helvetica Neue',sans-serif;font-size:${style.fontSize}px;line-height:${style.fontSize * 1.4}px;font-weight:${style.fontWeight};white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;box-sizing:border-box;">${escapeHtml(node.name)}</div>` +
+                        `</foreignObject>`;
                 }
                 return nodes;
             }
@@ -4807,6 +4812,7 @@
                 exportSvgBtn.addEventListener('click', async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    closeAllMenus();
                     await exportToSvg();
                 });
             }
